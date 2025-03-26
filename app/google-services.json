@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "408837871296",
+    "firebase_url": "https://green-ghat-default-rtdb.firebaseio.com",
+    "project_id": "green-ghat",
+    "storage_bucket": "green-ghat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:408837871296:android:e2649fcdd41c43fd673f25",
+        "android_client_info": {
+          "package_name": "com.sgstudio.GreenChatMessenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3_0oJl5LecgXzrfzT2BJ_0mXK2-ATmoM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:408837871296:android:c6d14cb4d64bfa45673f25",
+        "android_client_info": {
+          "package_name": "com.sgstudio.OfoxMessenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3_0oJl5LecgXzrfzT2BJ_0mXK2-ATmoM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:408837871296:android:8dce2bedda3843dc673f25",
+        "android_client_info": {
+          "package_name": "com.sgstudio.sgnotes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3_0oJl5LecgXzrfzT2BJ_0mXK2-ATmoM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

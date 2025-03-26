@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Ofox Messenger</string>
+    <string name="welcome_to_ofox">Welcome to Ofox Messenger</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="no_account_register">No account? Register</string>
+    <string name="toggle_theme">Toggle theme</string>
+    <string name="change_language">Change language</string>
+    <string name="app_logo">App logo</string>
+    <string name="network_error">Network error. Check your connection.</string>
+    <string name="retry">Retry</string>
+    <string name="login_success">Login successful</string>
+    <string name="login_failed">Login failed</string>
+    <string name="select_language">Select language</string>
+    <string name="russian">Russian</string>
+    <string name="english">English</string>
+    <string name="kazakh">Kazakh</string>
+    <string name="app_version">Version 1.0</string>
+</resources>

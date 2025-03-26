@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.sgstudio.OfoxMessenger" />
+                  <option name="mobileSdkAppId" value="1:408837871296:android:c6d14cb4d64bfa45673f25" />
+                  <option name="projectId" value="green-ghat" />
+                  <option name="projectNumber" value="408837871296" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="orange_200">#FFFF9800</color>
+    <color name="orange_500">#FFFF5722</color>
+    <color name="orange_700">#FFE64A19</color>
+    <color name="deep_orange">#FFBF360C</color>
+    
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <color name="light_background">#FFFAFAFA</color>
+    <color name="dark_background">#FF121212</color>
+    <color name="dark_card">#FF1E1E1E</color>
+    <color name="light_card">#FFFFFFFF</color>
+    
+    <color name="dark_gray">#FF212121</color>
+    <color name="gray">#FF424242</color>
+    <color name="light_gray">#FFE0E0E0</color>
+    
+    <color name="error_color">#FFB00020</color>
+    <color name="success_color">#FF4CAF50</color>
+    <color name="warning_color">#FFFFAB00</color>
 </resources>

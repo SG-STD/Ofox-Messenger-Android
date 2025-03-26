@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Ofox Messenger</string>
+    <string name="welcome_to_ofox">Ofox Messenger-ге қош келдіңіз</string>
+    <string name="email">Email</string>
+    <string name="password">Құпия сөз</string>
+    <string name="login">Кіру</string>
+    <string name="no_account_register">Тіркелгіңіз жоқ па? Тіркелу</string>
+    <string name="toggle_theme">Тақырыпты ауыстыру</string>
+    <string name="change_language">Тілді өзгерту</string>
+    <string name="app_logo">Қолданба логотипі</string>
+    <string name="network_error">Желі қатесі. Байланысты тексеріңіз.</string>
+    <string name="retry">Қайталау</string>
+    <string name="login_success">Кіру сәтті болды</string>
+    <string name="login_failed">Кіру сәтсіз болды</string>
+    <string name="select_language">Тілді таңдаңыз</string>
+    <string name="russian">Орысша</string>
+    <string name="english">Ағылшынша</string>
+    <string name="kazakh">Қазақша</string>
+    <string name="app_version">Нұсқа 1.0</string>
+</resources>
