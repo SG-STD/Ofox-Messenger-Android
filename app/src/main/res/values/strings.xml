@@ -20,4 +20,6 @@
     <string name="forgot_password">Забыли пароль?</string>
     <string name="no_account">Нет аккаунта?</string>
     <string name="register">Зарегистрироваться</string>
+    <string name="app_slogan">Общайтесь без границ</string>
+    <string name="developed_by">Разработано SG STUDIO © 2025</string>
 </resources>

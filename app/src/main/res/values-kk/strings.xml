@@ -20,4 +20,6 @@
     <string name="forgot_password">Құпия сөзді ұмыттыңыз ба?</string>
     <string name="no_account">Тіркелгіңіз жоқ па?</string>
     <string name="register">Тіркелу</string>
+    <string name="app_slogan">Шексіз байланыс</string>
+    <string name="developed_by">SG STUDIO жасаған © 2025</string>
 </resources>
