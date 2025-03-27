@@ -29,6 +29,9 @@ import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import android.util.Base64
+import com.sgstudio.OfoxMessenger.utils.NetworkHandler
+import com.sgstudio.OfoxMessenger.utils.NetworkUtils
+import com.sgstudio.OfoxMessenger.utils.SessionManager
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -45,6 +48,8 @@ class MainActivity : AppCompatActivity() {
     private val serverUrl = "https://greechat.kz/serv"
     private var secretKey: String? = null // Ключ будет загружен из Firebase
     private var isNetworkErrorShown = false
+    private lateinit var networkHandler: NetworkHandler
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +66,19 @@ class MainActivity : AppCompatActivity() {
 
         // Загрузка ключа шифрования из Firebase
         loadEncryptionKey()
+
+        // Инициализация NetworkHandler после загрузки ключа
+        networkHandler = NetworkHandler(secretKey)
+
+        // Инициализация SessionManager
+        sessionManager = SessionManager(this)
+
+        // Проверка, авторизован ли пользователь
+        if (sessionManager.isLoggedIn()) {
+            // TODO: Переход на главный экран, если пользователь уже авторизован
+            // startActivity(Intent(this, HomeActivity::class.java))
+            // finish()
+        }
 
         // Настройка анимаций
         setupAnimations()
@@ -164,96 +182,153 @@ class MainActivity : AppCompatActivity() {
         return isValid
     }
 
+    // Обновите метод loginUser:
+    // Обновите метод loginUser:
     private fun loginUser(email: String, password: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        // Проверка подключения к интернету
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            showNetworkError(getString(R.string.network_error))
+            return
+        }
+
+        CoroutineScope(Dispatchers.Main).launch {
             try {
-                // Шифруем данные для отправки
+                showProgress(true)
+
+                // Подготовка данных для запроса
                 val jsonData = JSONObject().apply {
-                    put("email", encrypt(email))
-                    put("password", encrypt(password))
-                    put("action", encrypt("login"))
+                    put("email", email)
+                    put("password", password)
+                    put("action", "login")
                 }
 
-                val mediaType = "application/json; charset=utf-8".toMediaType()
-                val requestBody = jsonData.toString().toRequestBody(mediaType)
+                // Отправка запроса через NetworkHandler
+                val result = networkHandler.sendAuthRequest(jsonData)
 
-                val request = Request.Builder()
-                    .url(serverUrl)
-                    .post(requestBody)
-                    .build()
+                if (result.isSuccess) {
+                    val response = result.getOrNull()
+                    if (response != null && response.optBoolean("success", false)) {
+                        // Успешный вход
+                        val userId = response.getString("user_id")
+                        val nickname = response.optString("nickname", "")
+                        val profilePicture = response.optString("profile_picture", "")
+                        val status = response.optString("status", "")
 
-                try {
-                    val response = client.newCall(request).execute()
-                    val responseBody = response.body?.string() ?: ""
+                        // Сохраняем данные пользователя
+                        saveUserData(userId, nickname, profilePicture, status)
 
-                    withContext(Dispatchers.Main) {
+                        // Показываем сообщение об успешном входе
+                        showSnackbar("Добро пожаловать, $nickname!")
+
+                        // TODO: Переход на главный экран
+                        // startActivity(Intent(this@MainActivity, HomeActivity::class.java))
+
                         showProgress(false)
-                        hideNetworkError()
-
-                        if (response.isSuccessful) {
-                            try {
-                                val jsonResponse = JSONObject(responseBody)
-                                val success = jsonResponse.optBoolean("success", false)
-
-                                if (success) {
-                                    // Вход через Firebase для получения токена
-                                    firebaseLogin(email, password)
-                                } else {
-                                    val message = jsonResponse.optString("message", "Ошибка входа")
-                                    showSnackbar(message)
-                                }
-                            } catch (e: Exception) {
-                                showSnackbar(getString(R.string.login_failed))
-                            }
-                        } else {
-                            showSnackbar(getString(R.string.network_error))
-                        }
+                    } else {
+                        showProgress(false)
+                        showSnackbar("Ошибка входа")
                     }
-                } catch (e: UnknownHostException) {
-                    withContext(Dispatchers.Main) {
-                        showProgress(false)
-                        showNetworkError(getString(R.string.network_error))
-                    }
-                } catch (e: IOException) {
-                    withContext(Dispatchers.Main) {
-                        showProgress(false)
-                        showNetworkError(getString(R.string.network_error))
+                } else {
+                    val error = result.exceptionOrNull()?.message ?: getString(R.string.network_error)
+                    showProgress(false)
+                    showSnackbar(error)
+
+                    if (error.contains("сети") || error.contains("network")) {
+                        showNetworkError(error)
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    showProgress(false)
-                    showSnackbar(getString(R.string.network_error))
-                }
+                showProgress(false)
+                showSnackbar(e.message ?: getString(R.string.network_error))
             }
         }
     }
 
-    private fun firebaseLogin(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Успешный вход
-                    val user = auth.currentUser
-                    updateUserLastLogin(user?.uid)
-                    showSnackbar(getString(R.string.login_success))
+    // Добавьте новый метод для получения данных пользователя:
+    private fun fetchUserData(userId: String) {
+        val database = FirebaseDatabase.getInstance()
+        val userRef = database.getReference("users/$userId")
+
+        userRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                showProgress(false)
+
+                if (snapshot.exists()) {
+                    // Обновляем время последнего входа
+                    updateUserLastLogin(userId)
+
+                    // Получаем данные пользователя
+                    val nickname = snapshot.child("nickname").getValue(String::class.java) ?: ""
+                    val profilePicture = snapshot.child("profile_picture").getValue(String::class.java) ?: ""
+                    val status = snapshot.child("status").getValue(String::class.java) ?: ""
+
+                    // Сохраняем данные пользователя локально
+                    saveUserData(userId, nickname, profilePicture, status)
+
+                    // Показываем сообщение об успешном входе
+                    showSnackbar("Добро пожаловать, $nickname!")
 
                     // TODO: Переход на главный экран
+                    // Например: startActivity(Intent(this@MainActivity, HomeActivity::class.java))
                 } else {
-                    // Ошибка входа
-                    showSnackbar(getString(R.string.login_failed))
+                    showSnackbar("Ошибка: данные пользователя не найдены")
                 }
             }
+
+            override fun onCancelled(error: DatabaseError) {
+                showProgress(false)
+                showSnackbar("Ошибка при получении данных: ${error.message}")
+            }
+        })
     }
 
-    private fun updateUserLastLogin(userId: String?) {
-        if (userId != null) {
-            val database = FirebaseDatabase.getInstance()
-            val userRef = database.getReference("users/$userId")
+    // Добавьте метод для сохранения данных пользователя:
+    private fun saveUserData(userId: String, nickname: String, profilePicture: String, status: String) {
+        val prefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putString("user_id", userId)
+            putString("nickname", nickname)
+            putString("profile_picture", profilePicture)
+            putString("status", status)
+            putLong("last_login", System.currentTimeMillis())
+            apply()
+        }
+    }
 
-            val currentTime = System.currentTimeMillis().toString()
-            userRef.child("last_login").setValue(currentTime)
-            userRef.child("last_seen").setValue(currentTime.toLong())
+    private fun updateUserLastLogin(userId: String) {
+        val database = FirebaseDatabase.getInstance()
+        val userRef = database.getReference("users/$userId")
+
+        val currentTime = System.currentTimeMillis()
+        val updates = hashMapOf<String, Any>(
+            "last_login" to currentTime.toString(),
+            "last_seen" to currentTime
+        )
+
+        userRef.updateChildren(updates)
+
+        // Обновляем FCM токен, если он изменился
+        updateFcmToken(userId)
+    }
+
+    // Добавьте метод для обновления FCM токена:
+    private fun updateFcmToken(userId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Здесь можно получить текущий FCM токен и обновить его в базе данных
+                // Например, с использованием Firebase Messaging:
+                // val token = FirebaseMessaging.getInstance().token.await()
+
+                // Для примера используем заглушку
+                val token = "current_fcm_token"
+
+                val database = FirebaseDatabase.getInstance()
+                val userRef = database.getReference("users/$userId")
+
+                userRef.child("fcm_token").setValue(token)
+            } catch (e: Exception) {
+                // Обработка ошибок
+            }
         }
     }
 
