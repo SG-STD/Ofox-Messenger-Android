@@ -22,4 +22,22 @@
     <string name="register">Тіркелу</string>
     <string name="app_slogan">Шексіз байланыс</string>
     <string name="developed_by">SG STUDIO жасаған © 2025</string>
+    
+    <!-- Новые строки для регистрации -->
+    <string name="register_welcome">Ofox Messenger-ге қош келдіңіз</string>
+    <string name="nickname">Лақап аты</string>
+    <string name="confirm_password">Құпия сөзді растаңыз</string>
+    <string name="select_photo">Фотосуретті таңдаңыз</string>
+    <string name="have_account">Тіркелгіңіз бар ма?</string>
+    <string name="registration_success">Тіркеу сәтті аяқталды</string>
+    <string name="registration_failed">Тіркеу кезінде қате</string>
+    <string name="error_empty_nickname">Лақап атын енгізіңіз</string>
+    <string name="error_short_nickname">Лақап аты кемінде 3 таңбадан тұруы керек</string>
+    <string name="error_empty_email">Email енгізіңіз</string>
+    <string name="error_invalid_email">Жарамды email енгізіңіз</string>
+    <string name="error_empty_password">Құпия сөзді енгізіңіз</string>
+    <string name="error_short_password">Құпия сөз кемінде 6 таңбадан тұруы керек</string>
+    <string name="error_empty_confirm_password">Құпия сөзді растаңыз</string>
+    <string name="error_passwords_not_match">Құпия сөздер сәйкес келмейді</string>
+    <string name="error_upload_image">Суретті жүктеу кезінде қате</string>
 </resources>

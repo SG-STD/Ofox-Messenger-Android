@@ -54,6 +54,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx:23.2.1")
+    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
 
     // Material Design
     implementation("com.google.android.material:material:1.10.0")
@@ -61,6 +62,7 @@ dependencies {
     // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 
     // OkHttp для сетевых запросов
     implementation("com.squareup.okhttp3:okhttp:4.11.0")

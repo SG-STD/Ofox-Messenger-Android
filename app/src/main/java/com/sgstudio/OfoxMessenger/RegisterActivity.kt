@@ -1,56 +1,66 @@
 package com.sgstudio.OfoxMessenger
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Base64
 import android.view.View
 import android.view.animation.AnimationUtils
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.sgstudio.OfoxMessenger.databinding.ActivityMainBinding
-import java.util.Locale
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.MediaType.Companion.toMediaType
-import org.json.JSONObject
+import com.google.firebase.storage.FirebaseStorage
+import com.sgstudio.OfoxMessenger.databinding.ActivityRegisterBinding
+import com.sgstudio.OfoxMessenger.utils.NetworkHandler
+import com.sgstudio.OfoxMessenger.utils.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
+import java.util.Locale
+import java.util.UUID
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
-import android.util.Base64
-import com.sgstudio.OfoxMessenger.utils.NetworkHandler
-import com.sgstudio.OfoxMessenger.utils.NetworkUtils
-import com.sgstudio.OfoxMessenger.utils.SessionManager
-import java.io.IOException
-import java.net.UnknownHostException
-import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity() {
+class RegisterActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var auth: FirebaseAuth
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
-        .writeTimeout(10, TimeUnit.SECONDS)
-        .build()
-    private val serverUrl = "https://greechat.kz/serv"
-    private var secretKey: String? = null // Ключ будет загружен из Firebase
-    private var isNetworkErrorShown = false
+    private lateinit var binding: ActivityRegisterBinding
+    private var secretKey: String? = null
     private lateinit var networkHandler: NetworkHandler
-    private lateinit var sessionManager: SessionManager
+    private var isNetworkErrorShown = false
+    private var selectedImageUri: Uri? = null
+    private var profileImageBase64: String? = null
+
+    // Регистрация для получения результата выбора изображения
+    private val pickImageLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                selectedImageUri = uri
+                binding.profileImageView.setImageURI(uri)
+                
+                // Конвертируем изображение в Base64
+                val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, uri)
+                profileImageBase64 = bitmapToBase64(bitmap)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,27 +69,11 @@ class MainActivity : AppCompatActivity() {
         loadLocale()
         loadTheme()
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Инициализация Firebase (автоматически через google-services.json)
-        auth = FirebaseAuth.getInstance()
 
         // Загрузка ключа шифрования из Firebase
         loadEncryptionKey()
-
-        // Инициализация NetworkHandler после загрузки ключа
-        networkHandler = NetworkHandler(secretKey)
-
-        // Инициализация SessionManager
-        sessionManager = SessionManager(this)
-
-        // Проверка, авторизован ли пользователь
-        if (sessionManager.isLoggedIn()) {
-            // TODO: Переход на главный экран, если пользователь уже авторизован
-            // startActivity(Intent(this, HomeActivity::class.java))
-            // finish()
-        }
 
         // Настройка анимаций
         setupAnimations()
@@ -99,6 +93,8 @@ class MainActivity : AppCompatActivity() {
                     showNetworkError(getString(R.string.network_error))
                 } else {
                     hideNetworkError()
+                    // Инициализация NetworkHandler после загрузки ключа
+                    networkHandler = NetworkHandler(secretKey)
                 }
             }
 
@@ -115,19 +111,30 @@ class MainActivity : AppCompatActivity() {
 
         // Анимация для кнопок
         val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
-        binding.loginButton.startAnimation(slideUp)
+        binding.registerButton.startAnimation(slideUp)
     }
 
     private fun setupClickListeners() {
-        // Обработчик кнопки входа
-        binding.loginButton.setOnClickListener {
+        // Обработчик выбора фото профиля
+        binding.selectPhotoTextView.setOnClickListener {
+            openImagePicker()
+        }
+        
+        binding.profileImageView.setOnClickListener {
+            openImagePicker()
+        }
+
+        // Обработчик кнопки регистрации
+        binding.registerButton.setOnClickListener {
+            val nickname = binding.nicknameEditText.text.toString().trim()
             val email = binding.emailEditText.text.toString().trim()
             val password = binding.passwordEditText.text.toString().trim()
+            val confirmPassword = binding.confirmPasswordEditText.text.toString().trim()
 
-            if (validateInput(email, password)) {
+            if (validateInput(nickname, email, password, confirmPassword)) {
                 if (secretKey != null) {
                     showProgress(true)
-                    loginUser(email, password)
+                    registerUser(nickname, email, password)
                 } else {
                     showNetworkError(getString(R.string.network_error))
                 }
@@ -144,9 +151,9 @@ class MainActivity : AppCompatActivity() {
             showLanguageDialog()
         }
 
-        binding.registerTextView.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
+        // Обработчик перехода на вход
+        binding.loginTextView.setOnClickListener {
+            finish() // Возврат на экран входа
         }
 
         // Обработчик кнопки повтора при ошибке сети
@@ -156,35 +163,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun validateInput(email: String, password: String): Boolean {
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        pickImageLauncher.launch(intent)
+    }
+
+    private fun bitmapToBase64(bitmap: Bitmap): String {
+        val outputStream = ByteArrayOutputStream()
+        // Сжимаем изображение для уменьшения размера
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+        val byteArray = outputStream.toByteArray()
+        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+    }
+
+    private fun validateInput(nickname: String, email: String, password: String, confirmPassword: String): Boolean {
         var isValid = true
 
+        // Проверка никнейма
+        if (nickname.isEmpty()) {
+            binding.nicknameInputLayout.error = getString(R.string.error_empty_nickname)
+            isValid = false
+        } else if (nickname.length < 3) {
+            binding.nicknameInputLayout.error = getString(R.string.error_short_nickname)
+            isValid = false
+        } else {
+            binding.nicknameInputLayout.error = null
+        }
+
+        // Проверка email
         if (email.isEmpty()) {
-            binding.emailInputLayout.error = "Введите email"
+            binding.emailInputLayout.error = getString(R.string.error_empty_email)
             isValid = false
         } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.emailInputLayout.error = "Введите корректный email"
+            binding.emailInputLayout.error = getString(R.string.error_invalid_email)
             isValid = false
         } else {
             binding.emailInputLayout.error = null
         }
 
+        // Проверка пароля
         if (password.isEmpty()) {
-            binding.passwordInputLayout.error = "Введите пароль"
+            binding.passwordInputLayout.error = getString(R.string.error_empty_password)
             isValid = false
         } else if (password.length < 6) {
-            binding.passwordInputLayout.error = "Пароль должен содержать минимум 6 символов"
+            binding.passwordInputLayout.error = getString(R.string.error_short_password)
             isValid = false
         } else {
             binding.passwordInputLayout.error = null
         }
 
+        // Проверка подтверждения пароля
+        if (confirmPassword.isEmpty()) {
+            binding.confirmPasswordInputLayout.error = getString(R.string.error_empty_confirm_password)
+            isValid = false
+        } else if (confirmPassword != password) {
+            binding.confirmPasswordInputLayout.error = getString(R.string.error_passwords_not_match)
+            isValid = false
+        } else {
+            binding.confirmPasswordInputLayout.error = null
+        }
+
         return isValid
     }
 
-    // Обновите метод loginUser:
-    // Обновите метод loginUser:
-    private fun loginUser(email: String, password: String) {
+    private fun registerUser(nickname: String, email: String, password: String) {
         // Проверка подключения к интернету
         if (!NetworkUtils.isNetworkAvailable(this)) {
             showNetworkError(getString(R.string.network_error))
@@ -199,7 +241,11 @@ class MainActivity : AppCompatActivity() {
                 val jsonData = JSONObject().apply {
                     put("email", email)
                     put("password", password)
-                    put("action", "login")
+                    put("nickname", nickname)
+                    put("action", "register")
+                    if (profileImageBase64 != null) {
+                        put("profile_picture", profileImageBase64)
+                    }
                 }
 
                 // Отправка запроса через NetworkHandler
@@ -208,25 +254,25 @@ class MainActivity : AppCompatActivity() {
                 if (result.isSuccess) {
                     val response = result.getOrNull()
                     if (response != null && response.optBoolean("success", false)) {
-                        // Успешный вход
+                        // Успешная регистрация
                         val userId = response.getString("user_id")
-                        val nickname = response.optString("nickname", "")
-                        val profilePicture = response.optString("profile_picture", "")
-                        val status = response.optString("status", "")
-
-                        // Сохраняем данные пользователя
-                        saveUserData(userId, nickname, profilePicture, status)
-
-                        // Показываем сообщение об успешном входе
-                        showSnackbar("Добро пожаловать, $nickname!")
-
-                        // TODO: Переход на главный экран
-                        // startActivity(Intent(this@MainActivity, HomeActivity::class.java))
-
-                        showProgress(false)
+                        
+                        // Если есть изображение профиля, загружаем его в Firebase Storage
+                        if (selectedImageUri != null) {
+                            uploadProfileImage(userId)
+                        } else {
+                            // Показываем сообщение об успешной регистрации
+                            showSnackbar(getString(R.string.registration_success))
+                            
+                            // Возвращаемся на экран входа через 2 секунды
+                            withContext(Dispatchers.IO) {
+                                kotlinx.coroutines.delay(2000)
+                            }
+                            finish()
+                        }
                     } else {
                         showProgress(false)
-                        showSnackbar("Ошибка входа")
+                        showSnackbar(getString(R.string.registration_failed))
                     }
                 } else {
                     val error = result.exceptionOrNull()?.message ?: getString(R.string.network_error)
@@ -244,103 +290,51 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Добавьте новый метод для получения данных пользователя:
-    private fun fetchUserData(userId: String) {
-        val database = FirebaseDatabase.getInstance()
-        val userRef = database.getReference("users/$userId")
-
-        userRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                showProgress(false)
-
-                if (snapshot.exists()) {
-                    // Обновляем время последнего входа
-                    updateUserLastLogin(userId)
-
-                    // Получаем данные пользователя
-                    val nickname = snapshot.child("nickname").getValue(String::class.java) ?: ""
-                    val profilePicture = snapshot.child("profile_picture").getValue(String::class.java) ?: ""
-                    val status = snapshot.child("status").getValue(String::class.java) ?: ""
-
-                    // Сохраняем данные пользователя локально
-                    saveUserData(userId, nickname, profilePicture, status)
-
-                    // Показываем сообщение об успешном входе
-                    showSnackbar("Добро пожаловать, $nickname!")
-
-                    // TODO: Переход на главный экран
-                    // Например: startActivity(Intent(this@MainActivity, HomeActivity::class.java))
-                } else {
-                    showSnackbar("Ошибка: данные пользователя не найдены")
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                showProgress(false)
-                showSnackbar("Ошибка при получении данных: ${error.message}")
-            }
-        })
-    }
-
-    // Добавьте метод для сохранения данных пользователя:
-    private fun saveUserData(userId: String, nickname: String, profilePicture: String, status: String) {
-        val prefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
-        prefs.edit().apply {
-            putString("user_id", userId)
-            putString("nickname", nickname)
-            putString("profile_picture", profilePicture)
-            putString("status", status)
-            putLong("last_login", System.currentTimeMillis())
-            apply()
-        }
-    }
-
-    private fun updateUserLastLogin(userId: String) {
-        val database = FirebaseDatabase.getInstance()
-        val userRef = database.getReference("users/$userId")
-
-        val currentTime = System.currentTimeMillis()
-        val updates = hashMapOf<String, Any>(
-            "last_login" to currentTime.toString(),
-            "last_seen" to currentTime
-        )
-
-        userRef.updateChildren(updates)
-
-        // Обновляем FCM токен, если он изменился
-        updateFcmToken(userId)
-    }
-
-    // Добавьте метод для обновления FCM токена:
-    private fun updateFcmToken(userId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // Здесь можно получить текущий FCM токен и обновить его в базе данных
-                // Например, с использованием Firebase Messaging:
-                // val token = FirebaseMessaging.getInstance().token.await()
-
-                // Для примера используем заглушку
-                val token = "current_fcm_token"
-
+    private suspend fun uploadProfileImage(userId: String) {
+        try {
+            selectedImageUri?.let { uri ->
+                val storageRef = FirebaseStorage.getInstance().reference
+                val imageRef = storageRef.child("profile_images/$userId/${UUID.randomUUID()}.jpg")
+                
+                // Загружаем изображение в Firebase Storage
+                val uploadTask = imageRef.putFile(uri).await()
+                
+                // Получаем URL загруженного изображения
+                val downloadUrl = imageRef.downloadUrl.await().toString()
+                
+                // Обновляем профиль пользователя с URL изображения
                 val database = FirebaseDatabase.getInstance()
                 val userRef = database.getReference("users/$userId")
-
-                userRef.child("fcm_token").setValue(token)
-            } catch (e: Exception) {
-                // Обработка ошибок
+                userRef.child("profile_picture").setValue(downloadUrl)
+                
+                showProgress(false)
+                showSnackbar(getString(R.string.registration_success))
+                
+                // Возвращаемся на экран входа через 2 секунды
+                withContext(Dispatchers.IO) {
+                    kotlinx.coroutines.delay(2000)
+                }
+                finish()
             }
+        } catch (e: Exception) {
+            showProgress(false)
+            showSnackbar(getString(R.string.error_upload_image))
         }
     }
 
     private fun showProgress(show: Boolean) {
         binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
-        binding.loginButton.isEnabled = !show
+        binding.registerButton.isEnabled = !show
+        binding.nicknameEditText.isEnabled = !show
         binding.emailEditText.isEnabled = !show
         binding.passwordEditText.isEnabled = !show
+        binding.confirmPasswordEditText.isEnabled = !show
+        binding.selectPhotoTextView.isEnabled = !show
+        binding.profileImageView.isEnabled = !show
     }
 
     private fun showSnackbar(message: String) {
-        Snackbar.make(binding.main, message, Snackbar.LENGTH_LONG).show()
+        Snackbar.make(binding.registerMain, message, Snackbar.LENGTH_LONG).show()
     }
 
     private fun showNetworkError(message: String) {
@@ -374,7 +368,7 @@ class MainActivity : AppCompatActivity() {
         binding.themeToggleButton.startAnimation(rotateAnimation)
     }
 
-    private fun loadTheme() {
+        private fun loadTheme() {
         val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
         val themeMode = prefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         AppCompatDelegate.setDefaultNightMode(themeMode)

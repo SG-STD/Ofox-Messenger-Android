@@ -717,4 +717,93 @@ class NetworkHandler(private val secretKey: String?) {
         val key = digest.digest()
         return SecretKeySpec(key, "AES")
     }
+
+    // Добавьте этот метод в класс NetworkHandler
+
+    suspend fun registerUserWithProfileImage(data: JSONObject): Result<JSONObject> {
+        return withContext(Dispatchers.IO) {
+            // Проверка лимита запросов
+            if (!checkRequestLimit()) {
+                return@withContext Result.failure(Exception("Превышен лимит запросов. Пожалуйста, подождите немного."))
+            }
+
+            try {
+                val email = data.getString("email")
+                val password = data.getString("password")
+                val nickname = data.getString("nickname")
+                val profilePicture = data.optString("profile_picture", "")
+
+                // Проверяем, не существует ли уже пользователь с таким email или nickname
+                val userExistsByEmail = checkUserExists(email)
+                if (userExistsByEmail) {
+                    return@withContext Result.failure(Exception("Пользователь с таким email уже существует"))
+                }
+
+                val userExistsByNickname = checkUserExistsByNickname(nickname)
+                if (userExistsByNickname) {
+                    return@withContext Result.failure(Exception("Пользователь с таким никнеймом уже существует"))
+                }
+
+                // Генерируем уникальный ID для нового пользователя
+                val userId = database.getReference("users").push().key ?:
+                return@withContext Result.failure(Exception("Ошибка создания пользователя"))
+
+                // Хешируем пароль с BCrypt
+                val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
+
+                // Создаем данные пользователя
+                val userData = HashMap<String, Any>().apply {
+                    put("email", email)
+                    put("password_hash", passwordHash)
+                    put("nickname", nickname)
+                    put("profile_picture", profilePicture)
+                    put("status", "")
+                    put("registration_date", System.currentTimeMillis().toString())
+                    put("last_login", System.currentTimeMillis().toString())
+                    put("last_seen", System.currentTimeMillis())
+                    put("is_online", false)
+                    put("isBanned", false)
+                }
+
+                // Сохраняем пользователя в базу данных
+                database.getReference("users/$userId").setValue(userData)
+                    .addOnSuccessListener {
+                        // Успешно создан пользователь
+                    }
+                    .addOnFailureListener {
+                        // Ошибка при создании пользователя
+                    }
+
+                // Создаем ответ
+                val response = JSONObject().apply {
+                    put("success", true)
+                    put("user_id", userId)
+                    put("email", email)
+                    put("nickname", nickname)
+                    put("message", "Регистрация успешно завершена")
+                }
+
+                return@withContext Result.success(response)
+            } catch (e: Exception) {
+                Log.e("NetworkHandler", "Ошибка при регистрации пользователя: ${e.message}", e)
+                return@withContext Result.failure(Exception("Ошибка при регистрации: ${e.message}"))
+            }
+        }
+    }
+
+    // Добавьте этот метод для проверки существования пользователя по никнейму
+    private suspend fun checkUserExistsByNickname(nickname: String): Boolean = suspendCancellableCoroutine { continuation ->
+        val usersRef = database.getReference("users")
+
+        usersRef.orderByChild("nickname").equalTo(nickname).limitToFirst(1)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    continuation.resume(snapshot.exists() && snapshot.childrenCount > 0)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    continuation.resume(false)
+                }
+            })
+    }
 }
