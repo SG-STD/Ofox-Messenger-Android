@@ -17,4 +17,7 @@
     <string name="english">English</string>
     <string name="kazakh">Қазақша</string>
     <string name="app_version">Версия 1.0</string>
+    <string name="forgot_password">Забыли пароль?</string>
+    <string name="no_account">Нет аккаунта?</string>
+    <string name="register">Зарегистрироваться</string>
 </resources>

@@ -10,22 +10,59 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="24dp">
+        android:layout_height="match_parent">
 
+        <!-- Верхняя часть с градиентом -->
+        <View
+            android:id="@+id/topBackground"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@drawable/login_gradient_background"
+            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Логотип -->
+        <ImageView
+            android:id="@+id/logoImageView"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:contentDescription="@string/app_logo"
+            android:src="@drawable/app_logo"
+            app:layout_constraintBottom_toBottomOf="@id/topBackground"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.4" />
+
+        <!-- Заголовок приложения - исправленная версия -->
+        <TextView
+            android:id="@+id/appTitleText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="24dp"
+            android:gravity="center"
+            android:maxLines="2"
+            android:text="@string/welcome_to_ofox"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/logoImageView" />
+
+        <!-- Карточка для формы входа -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/loginCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="8dp"
-            app:strokeColor="@color/orange_500"
-            app:strokeWidth="2dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="-30dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.45">
+            app:layout_constraintTop_toBottomOf="@id/topBackground">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -33,26 +70,16 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <ImageView
-                    android:id="@+id/logoImageView"
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
-                    android:layout_gravity="center"
-                    android:layout_marginBottom="24dp"
-                    android:contentDescription="@string/app_logo"
-                    android:src="@drawable/ic_logo"
-                    app:tint="@color/orange_500" />
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:gravity="center"
-                    android:text="@string/welcome_to_ofox"
-                    android:textColor="@color/orange_500"
-                    android:textSize="24sp"
+                    android:layout_marginBottom="16dp"
+                    android:text="@string/login"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
+                <!-- Поле Email -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/emailInputLayout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -60,10 +87,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     android:hint="@string/email"
-                    app:boxStrokeColor="@color/orange_500"
-                    app:hintTextColor="@color/orange_500"
-                    app:startIconDrawable="@drawable/ic_email"
-                    app:startIconTint="@color/orange_500">
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:startIconDrawable="@drawable/ic_email">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/emailEditText"
@@ -72,19 +100,20 @@
                         android:inputType="textEmailAddress" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Поле пароля -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/passwordInputLayout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginBottom="8dp"
                     android:hint="@string/password"
-                    app:boxStrokeColor="@color/orange_500"
-                    app:hintTextColor="@color/orange_500"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusTopStart="12dp"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="@color/orange_500"
-                    app:startIconDrawable="@drawable/ic_lock"
-                    app:startIconTint="@color/orange_500">
+                    app:startIconDrawable="@drawable/ic_lock">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/passwordEditText"
@@ -93,43 +122,67 @@
                         android:inputType="textPassword" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Ссылка "Забыли пароль?" -->
+                <TextView
+                    android:id="@+id/forgotPasswordTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginBottom="24dp"
+                    android:text="@string/forgot_password"
+                    android:textColor="@color/orange_500"
+                    android:textSize="14sp" />
+
+                <!-- Кнопка входа -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/loginButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:layout_marginBottom="16dp"
-                    android:padding="12dp"
                     android:text="@string/login"
-                    android:textColor="@color/black"
-                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
                     app:backgroundTint="@color/orange_500"
-                    app:cornerRadius="8dp"
-                    app:icon="@drawable/ic_login"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/black" />
+                    app:cornerRadius="12dp" />
 
-                <TextView
-                    android:id="@+id/registerTextView"
+                <!-- Ссылка на регистрацию -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:padding="8dp"
-                    android:text="@string/no_account_register"
-                    android:textColor="@color/orange_500" />
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/no_account"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:id="@+id/registerTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/register"
+                        android:textColor="@color/orange_500"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Кнопки настроек -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/themeToggleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:contentDescription="@string/toggle_theme"
+            app:backgroundTint="@color/white"
+            app:fabSize="mini"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:backgroundTint="@color/orange_500"
-            app:tint="@color/black"
-            app:srcCompat="@drawable/ic_theme_toggle" />
+            app:srcCompat="@drawable/ic_theme_toggle"
+            app:tint="@color/orange_500" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/languageButton"
@@ -137,17 +190,19 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:contentDescription="@string/change_language"
+            app:backgroundTint="@color/white"
+            app:fabSize="mini"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:backgroundTint="@color/orange_500"
-            app:tint="@color/black"
-            app:srcCompat="@drawable/ic_language" />
+            app:srcCompat="@drawable/ic_language"
+            app:tint="@color/orange_500" />
 
+        <!-- Версия приложения -->
         <TextView
             android:id="@+id/versionTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:text="@string/app_version"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -156,6 +211,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- Индикатор загрузки -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
@@ -164,6 +220,7 @@
         android:indeterminateTint="@color/orange_500"
         android:visibility="gone" />
 
+    <!-- Карточка ошибки сети -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/networkErrorCard"
         android:layout_width="match_parent"
@@ -172,7 +229,7 @@
         android:layout_margin="16dp"
         android:visibility="gone"
         app:cardBackgroundColor="@color/error_color"
-        app:cardCornerRadius="8dp"
+        app:cardCornerRadius="16dp"
         app:cardElevation="4dp">
 
         <LinearLayout

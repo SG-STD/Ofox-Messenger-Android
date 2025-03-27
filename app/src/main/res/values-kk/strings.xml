@@ -17,4 +17,7 @@
     <string name="english">Ағылшынша</string>
     <string name="kazakh">Қазақша</string>
     <string name="app_version">Нұсқа 1.0</string>
+    <string name="forgot_password">Құпия сөзді ұмыттыңыз ба?</string>
+    <string name="no_account">Тіркелгіңіз жоқ па?</string>
+    <string name="register">Тіркелу</string>
 </resources>
