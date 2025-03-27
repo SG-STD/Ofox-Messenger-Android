@@ -40,4 +40,14 @@
     <string name="error_empty_confirm_password">Confirm your password</string>
     <string name="error_passwords_not_match">Passwords do not match</string>
     <string name="error_upload_image">Error uploading image</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="permission_rationale">Access to gallery is needed to select a profile photo</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="permission_denied">Permission to access photos denied</string>
+    <string name="terms_agreement">I agree to the <u>Privacy Policy</u> and <u>Terms of Service</u></string>
+    <string name="terms_not_accepted">You must accept the terms of service to register</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="terms_of_service_title">Terms of Service</string>
+    <string name="loading">Loading...</string>
 </resources>

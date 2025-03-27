@@ -40,4 +40,14 @@
     <string name="error_empty_confirm_password">Құпия сөзді растаңыз</string>
     <string name="error_passwords_not_match">Құпия сөздер сәйкес келмейді</string>
     <string name="error_upload_image">Суретті жүктеу кезінде қате</string>
+    <string name="permission_required">Рұқсат қажет</string>
+    <string name="permission_rationale">Профиль фотосуретін таңдау үшін галереяға қол жеткізу қажет</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Бас тарту</string>
+    <string name="permission_denied">Фотосуреттерге қол жеткізу рұқсаты берілмеді</string>
+    <string name="terms_agreement"><u>Құпиялылық саясатымен</u> және <u>Пайдаланушы келісімімен</u> келісемін</string>
+    <string name="terms_not_accepted">Тіркелу үшін пайдаланушы келісімінің шарттарын қабылдау қажет</string>
+    <string name="privacy_policy_title">Құпиялылық саясаты</string>
+    <string name="terms_of_service_title">Пайдаланушы келісімі</string>
+    <string name="loading">Жүктелуде...</string>
 </resources>

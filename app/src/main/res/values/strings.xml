@@ -39,4 +39,14 @@
     <string name="error_empty_confirm_password">Подтвердите пароль</string>
     <string name="error_passwords_not_match">Пароли не совпадают</string>
     <string name="error_upload_image">Ошибка при загрузке изображения</string>
+    <string name="permission_required">Требуется разрешение</string>
+    <string name="permission_rationale">Для выбора фото профиля необходим доступ к галерее</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Отмена</string>
+    <string name="permission_denied">Разрешение на доступ к фото отклонено</string>
+    <string name="terms_agreement">Я согласен с <font color="#FF5722"><u>Политикой конфиденциальности</u></font> и <font color="#FF5722"><u>Пользовательским соглашением</u></font></string>
+    <string name="terms_not_accepted">Для регистрации необходимо принять условия пользовательского соглашения</string>
+    <string name="privacy_policy_title">Политика конфиденциальности</string>
+    <string name="terms_of_service_title">Пользовательское соглашение</string>
+    <string name="loading">Загрузка...</string>
 </resources>
