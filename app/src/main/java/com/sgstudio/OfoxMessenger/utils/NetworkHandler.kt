@@ -51,243 +51,89 @@ class NetworkHandler(private val secretKey: String?) {
 
                 when (action) {
                     "login" -> {
-                        // Шифруем данные перед сохранением в логи (для безопасности)
-                        val encryptedIdentifier = encrypt(emailOrNickname)
-                        val encryptedTimestamp = encrypt(System.currentTimeMillis().toString())
+                        // Прямой поиск пользователя в базе данных
+                        Log.d("NetworkHandler", "Прямой поиск пользователя по никнейму")
 
-                        // Логируем попытку входа (зашифрованно)
-                        logAuthAttempt(encryptedIdentifier, "login_attempt", encryptedTimestamp)
-
-                        // Жесткая проверка для пользователя PressF
-                        if (emailOrNickname.equals("PressF", ignoreCase = true) ||
-                            emailOrNickname.equals("prostakdetaluft1@gmail.com", ignoreCase = true)) {
-
-                            Log.d("NetworkHandler", "Обнаружен запрос для пользователя PressF")
-
-                            // Хардкодим данные для пользователя PressF
-                            val userId = "-OFku0_tOnTdmvtP-3mO" // ID пользователя PressF
-                            val nickname = "PressF"
-                            val email = "prostakdetaluft1@gmail.com"
-
-                            // Проверяем пароль (для безопасности используем хардкодированный хеш)
-                            if (password == "123456") { // Предполагаемый пароль
-                                Log.d("NetworkHandler", "Пароль верный для пользователя PressF")
-
-                                // Обновляем время последнего входа
-                                updateLastLogin(userId)
-
-                                // Создаем сессию
-                                val sessionId = createNewSession(nickname)
-
-                                // Создаем ответ
-                                val response = JSONObject().apply {
-                                    put("success", true)
-                                    put("user_id", userId)
-                                    put("email", email)
-                                    put("nickname", nickname)
-                                    put("profile_picture", "")
-                                    put("status", "")
-                                    put("session_id", sessionId)
-                                    put("debug_info", "Использовано хардкодированное решение")
-                                }
-
-                                return@withContext Result.success(response)
-                            } else {
-                                Log.d("NetworkHandler", "Неверный пароль для пользователя PressF")
-                                return@withContext Result.failure(Exception("Неверный пароль"))
-                            }
-                        }
-
-                        // Для отладки: если это известный email пользователя PressF, попробуем найти его напрямую
-                        if (emailOrNickname == "prostakdetaluft1@gmail.com") {
-                            Log.d("NetworkHandler", "Пытаемся найти пользователя PressF напрямую по ID")
-                            val userSnapshot = getUserById("-OFku0_tOnTdmvtP-3mO")
-
-                            if (userSnapshot != null) {
-                                val userId = userSnapshot.key ?: ""
-                                val passwordHash = userSnapshot.child("password_hash").getValue(String::class.java)
-                                val email = userSnapshot.child("email").getValue(String::class.java) ?: ""
-
-                                Log.d("NetworkHandler", "Найден пользователь PressF: email=$email, userId=$userId")
-
-                                if (passwordHash != null) {
-                                    // Используем правильную проверку пароля с BCrypt
-                                    if (verifyPassword(password, passwordHash)) {
-                                        // Пароль верный, получаем данные пользователя
-                                        val nickname = userSnapshot.child("nickname").getValue(String::class.java) ?: ""
-                                        val profilePicture = userSnapshot.child("profile_picture").getValue(String::class.java) ?: ""
-                                        val status = userSnapshot.child("status").getValue(String::class.java) ?: ""
-
-                                        // Обновляем время последнего входа
-                                        updateLastLogin(userId)
-
-                                        // Создаем сессию
-                                        val sessionId = createNewSession(nickname)
-
-                                        // Создаем ответ
-                                        val response = JSONObject().apply {
-                                            put("success", true)
-                                            put("user_id", userId)
-                                            put("email", email)
-                                            put("nickname", nickname)
-                                            put("profile_picture", profilePicture)
-                                            put("status", status)
-                                            put("session_id", sessionId)
-                                        }
-
-                                        return@withContext Result.success(response)
+                        // Сначала ищем по никнейму
+                        val userSnapshot = suspendCancellableCoroutine<DataSnapshot?> { continuation ->
+                            database.getReference("users")
+                                .orderByChild("nickname")
+                                .equalTo(emailOrNickname)
+                                .get()
+                                .addOnSuccessListener { snapshot ->
+                                    if (snapshot.exists()) {
+                                        Log.d("NetworkHandler", "Пользователь найден по никнейму")
+                                        continuation.resume(snapshot.children.first())
                                     } else {
-                                        return@withContext Result.failure(Exception("Неверный пароль"))
+                                        // Если по никнейму не нашли, ищем по email
+                                        Log.d("NetworkHandler", "Пользователь по никнейму не найден, ищем по email")
+                                        database.getReference("users")
+                                            .orderByChild("email")
+                                            .equalTo(emailOrNickname)
+                                            .get()
+                                            .addOnSuccessListener { emailSnapshot ->
+                                                if (emailSnapshot.exists()) {
+                                                    Log.d("NetworkHandler", "Пользователь найден по email")
+                                                    continuation.resume(emailSnapshot.children.first())
+                                                } else {
+                                                    Log.d("NetworkHandler", "Пользователь не найден ни по никнейму, ни по email")
+                                                    continuation.resume(null)
+                                                }
+                                            }
+                                            .addOnFailureListener { error ->
+                                                Log.e("NetworkHandler", "Ошибка при поиске по email: ${error.message}")
+                                                continuation.resume(null)
+                                            }
                                     }
                                 }
-                            }
+                                .addOnFailureListener { error ->
+                                    Log.e("NetworkHandler", "Ошибка при поиске по никнейму: ${error.message}")
+                                    continuation.resume(null)
+                                }
                         }
 
-                        // Проверяем, может быть пользователь пытается войти по nickname "PressF"
-                        if (emailOrNickname == "PressF") {
-                            Log.d("NetworkHandler", "Пытаемся найти пользователя по nickname PressF")
-                            val userSnapshot = getUserByNickname("PressF")
-
-                            if (userSnapshot != null) {
-                                val userId = userSnapshot.key ?: ""
-                                val passwordHash = userSnapshot.child("password_hash").getValue(String::class.java)
-                                val email = userSnapshot.child("email").getValue(String::class.java) ?: ""
-
-                                Log.d("NetworkHandler", "Найден пользователь PressF: email=$email, userId=$userId")
-
-                                if (passwordHash != null) {
-                                    // Используем правильную проверку пароля с BCrypt
-                                    if (verifyPassword(password, passwordHash)) {
-                                        // Пароль верный, получаем данные пользователя
-                                        val nickname = userSnapshot.child("nickname").getValue(String::class.java) ?: ""
-                                        val profilePicture = userSnapshot.child("profile_picture").getValue(String::class.java) ?: ""
-                                        val status = userSnapshot.child("status").getValue(String::class.java) ?: ""
-
-                                        // Обновляем время последнего входа
-                                        updateLastLogin(userId)
-
-                                        // Создаем сессию
-                                        val sessionId = createNewSession(nickname)
-
-                                        // Создаем ответ
-                                        val response = JSONObject().apply {
-                                            put("success", true)
-                                            put("user_id", userId)
-                                            put("email", email)
-                                            put("nickname", nickname)
-                                            put("profile_picture", profilePicture)
-                                            put("status", status)
-                                            put("session_id", sessionId)
-                                        }
-
-                                        return@withContext Result.success(response)
-                                    } else {
-                                        return@withContext Result.failure(Exception("Неверный пароль"))
-                                    }
-                                }
-                            }
-                        }
-
-                        // Полный поиск по всем пользователям для отладки
-                        Log.d("NetworkHandler", "Выполняем полный поиск пользователей")
-                        val allUsers = getAllUsers()
-                        Log.d("NetworkHandler", "Получено ${allUsers.size} пользователей из базы данных")
-
-                        for (user in allUsers) {
-                            val userEmail = user.child("email").getValue(String::class.java) ?: ""
-                            val userNickname = user.child("nickname").getValue(String::class.java) ?: ""
-                            Log.d("NetworkHandler", "Пользователь в базе: id=${user.key}, email=$userEmail, nickname=$userNickname")
-
-                            // Если нашли пользователя с нужным email или nickname
-                            if (userEmail.equals(emailOrNickname, ignoreCase = true) ||
-                                userNickname.equals(emailOrNickname, ignoreCase = true)) {
-                                Log.d("NetworkHandler", "Найдено совпадение для $emailOrNickname: id=${user.key}")
-
-                                val userId = user.key ?: ""
-                                val passwordHash = user.child("password_hash").getValue(String::class.java)
-
-                                if (passwordHash != null) {
-                                    // Используем правильную проверку пароля с BCrypt
-                                    if (verifyPassword(password, passwordHash)) {
-                                        // Пароль верный, получаем данные пользователя
-                                        val nickname = user.child("nickname").getValue(String::class.java) ?: ""
-                                        val profilePicture = user.child("profile_picture").getValue(String::class.java) ?: ""
-                                        val status = user.child("status").getValue(String::class.java) ?: ""
-                                        val email = user.child("email").getValue(String::class.java) ?: ""
-
-                                        // Обновляем время последнего входа
-                                        updateLastLogin(userId)
-
-                                        // Создаем сессию
-                                        val sessionId = createNewSession(nickname)
-
-                                        // Создаем ответ
-                                        val response = JSONObject().apply {
-                                            put("success", true)
-                                            put("user_id", userId)
-                                            put("email", email)
-                                            put("nickname", nickname)
-                                            put("profile_picture", profilePicture)
-                                            put("status", status)
-                                            put("session_id", sessionId)
-                                        }
-
-                                        return@withContext Result.success(response)
-                                    } else {
-                                        return@withContext Result.failure(Exception("Неверный пароль"))
-                                    }
-                                }
-                            }
-                        }
-
-                        // Стандартный поиск по email или nickname
-                        Log.d("NetworkHandler", "Стандартный поиск по email или nickname")
-                        val userResult = findUserByEmailOrNickname(emailOrNickname)
-
-                        if (userResult.isSuccess) {
-                            val userSnapshot = userResult.getOrNull()
-                            if (userSnapshot != null) {
-                                val userId = userSnapshot.key ?: ""
-                                val passwordHash = userSnapshot.child("password_hash").getValue(String::class.java)
-                                val email = userSnapshot.child("email").getValue(String::class.java) ?: ""
-
-                                if (passwordHash != null) {
-                                    // Используем правильную проверку пароля с BCrypt
-                                    if (verifyPassword(password, passwordHash)) {
-                                        // Пароль верный, получаем данные пользователя
-                                        val nickname = userSnapshot.child("nickname").getValue(String::class.java) ?: ""
-                                        val profilePicture = userSnapshot.child("profile_picture").getValue(String::class.java) ?: ""
-                                        val status = userSnapshot.child("status").getValue(String::class.java) ?: ""
-
-                                        // Обновляем время последнего входа
-                                        updateLastLogin(userId)
-
-                                        // Создаем сессию
-                                        val sessionId = createNewSession(nickname)
-
-                                        // Создаем ответ
-                                        val response = JSONObject().apply {
-                                            put("success", true)
-                                            put("user_id", userId)
-                                            put("email", email)
-                                            put("nickname", nickname)
-                                            put("profile_picture", profilePicture)
-                                            put("status", status)
-                                            put("session_id", sessionId)
-                                        }
-
-                                        return@withContext Result.success(response)
-                                    } else {
-                                        return@withContext Result.failure(Exception("Неверный пароль"))
-                                    }
-                                } else {
-                                    return@withContext Result.failure(Exception("Ошибка аутентификации: хеш пароля не найден"))
-                                }
-                            } else {
-                                return@withContext Result.failure(Exception("Пользователь не найден"))
-                            }
-                        } else {
+                        if (userSnapshot == null) {
                             return@withContext Result.failure(Exception("Пользователь не найден"))
+                        }
+
+                        val userId = userSnapshot.key ?: ""
+                        val passwordHash = userSnapshot.child("password_hash").getValue(String::class.java)
+
+                        if (passwordHash == null) {
+                            return@withContext Result.failure(Exception("Ошибка аутентификации: хеш пароля не найден"))
+                        }
+
+                        // Используем улучшенную проверку пароля
+                        if (verifyPassword(password, passwordHash)) {
+                            // Пароль верный, получаем данные пользователя
+                            val nickname = userSnapshot.child("nickname").getValue(String::class.java) ?: ""
+                            val profilePicture = userSnapshot.child("profile_picture").getValue(String::class.java) ?: ""
+                            val status = userSnapshot.child("status").getValue(String::class.java) ?: ""
+                            val email = userSnapshot.child("email").getValue(String::class.java) ?: ""
+
+                            // Обновляем время последнего входа
+                            updateLastLogin(userId)
+
+                            // Создаем сессию
+                            val sessionId = createNewSession(nickname)
+
+                            // Кэшируем данные пользователя для офлайн-режима
+                            cacheUserData(userSnapshot)
+
+                            // Создаем ответ
+                            val response = JSONObject().apply {
+                                put("success", true)
+                                put("user_id", userId)
+                                put("email", email)
+                                put("nickname", nickname)
+                                put("profile_picture", profilePicture)
+                                put("status", status)
+                                put("session_id", sessionId)
+                            }
+
+                            return@withContext Result.success(response)
+                        } else {
+                            return@withContext Result.failure(Exception("Неверный пароль"))
                         }
                     }
                     "register" -> {
@@ -349,10 +195,83 @@ class NetworkHandler(private val secretKey: String?) {
         }
     }
 
+    // Обновленная функция проверки пароля
+    private fun verifyPassword(password: String, hashedPassword: String): Boolean {
+        return try {
+            if (hashedPassword.length < 4) {
+                // Если хеш слишком короткий, просто сравниваем напрямую
+                password == hashedPassword
+            } else {
+                val algorithm = hashedPassword.substring(0, 4)
+                when (algorithm) {
+                    "\$2y\$" -> BCrypt.checkpw(password, hashedPassword.replace("\$2y\$", "\$2a\$"))
+                    "\$2a\$" -> BCrypt.checkpw(password, hashedPassword)
+                    else -> password == hashedPassword
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("NetworkHandler", "Ошибка при проверке пароля: ${e.message}", e)
+            // Если произошла ошибка при проверке, пробуем прямое сравнение
+            password == hashedPassword
+        }
+    }
 
-                        private fun showToast(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    // Обновленная функция создания сессии
+    private suspend fun createNewSession(nickname: String): String = suspendCancellableCoroutine { continuation ->
+        val deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+        val sessionId = java.util.UUID.randomUUID().toString()
+
+        val session = HashMap<String, Any>().apply {
+            put("id", sessionId)
+            put("deviceName", deviceName)
+            put("deviceType", "ANDROID")
+            put("lastActive", com.google.firebase.database.ServerValue.TIMESTAMP)
+            put("createdAt", com.google.firebase.database.ServerValue.TIMESTAMP)
+        }
+
+        database.getReference("sessions")
+            .child(nickname)
+            .child(sessionId)
+            .setValue(session)
+            .addOnSuccessListener {
+                continuation.resume(sessionId)
+            }
+            .addOnFailureListener {
+                continuation.resume("") // Возвращаем пустую строку в случае ошибки
+            }
+    }
+
+    // Обновленная функция кэширования данных пользователя
+    private fun cacheUserData(userSnapshot: DataSnapshot) {
+        try {
+            val userData = HashMap<String, Any>()
+
+            // Извлекаем все необходимые поля из снапшота
+            if (userSnapshot.hasChild("nickname")) {
+                userData["nickname"] = userSnapshot.child("nickname").getValue(String::class.java) ?: ""
+            }
+            if (userSnapshot.hasChild("email")) {
+                userData["email"] = userSnapshot.child("email").getValue(String::class.java) ?: ""
+            }
+            if (userSnapshot.hasChild("profile_picture")) {
+                userData["profile_picture"] = userSnapshot.child("profile_picture").getValue(String::class.java) ?: ""
+            }
+            if (userSnapshot.hasChild("status")) {
+                userData["status"] = userSnapshot.child("status").getValue(String::class.java) ?: ""
+            }
+
+            // Сохраняем данные в SharedPreferences
+            context.getSharedPreferences("user_cache", Context.MODE_PRIVATE).edit().apply {
+                putString("user_id", userSnapshot.key)
+                putString("nickname", userData["nickname"] as? String ?: "")
+                putString("email", userData["email"] as? String ?: "")
+                putString("profile_picture", userData["profile_picture"] as? String ?: "")
+                putString("status", userData["status"] as? String ?: "")
+                putLong("cache_timestamp", System.currentTimeMillis())
+                apply()
+            }
+        } catch (e: Exception) {
+            Log.e("NetworkHandler", "Ошибка при кэшировании данных пользователя: ${e.message}", e)
         }
     }
 
@@ -545,26 +464,6 @@ class NetworkHandler(private val secretKey: String?) {
             })
     }
 
-    // Функция проверки пароля из старого кода
-    private fun verifyPassword(password: String, hashedPassword: String): Boolean {
-        return try {
-            if (hashedPassword.length < 4) {
-                // Если хеш слишком короткий, просто сравниваем напрямую
-                password == hashedPassword
-            } else {
-                val algorithm = hashedPassword.substring(0, 4)
-                when (algorithm) {
-                    "\$2y\$" -> BCrypt.checkpw(password, hashedPassword.replace("\$2y\$", "\$2a\$"))
-                    "\$2a\$" -> BCrypt.checkpw(password, hashedPassword)
-                    else -> password == hashedPassword
-                }
-            }
-        } catch (e: Exception) {
-            // Если произошла ошибка при проверке, пробуем прямое сравнение
-            password == hashedPassword
-        }
-    }
-
     private fun updateLastLogin(userId: String) {
         val userRef = database.getReference("users/$userId")
         val currentTime = System.currentTimeMillis()
@@ -586,31 +485,6 @@ class NetworkHandler(private val secretKey: String?) {
         }
 
         logsRef.push().setValue(logEntry)
-    }
-
-    // Функция для создания новой сессии
-    private suspend fun createNewSession(nickname: String): String = suspendCancellableCoroutine { continuation ->
-        val deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
-        val sessionId = java.util.UUID.randomUUID().toString()
-
-        val session = HashMap<String, Any>().apply {
-            put("id", sessionId)
-            put("deviceName", deviceName)
-            put("deviceType", "ANDROID")
-            put("lastActive", com.google.firebase.database.ServerValue.TIMESTAMP)
-            put("createdAt", com.google.firebase.database.ServerValue.TIMESTAMP)
-        }
-
-        database.getReference("sessions")
-            .child(nickname)
-            .child(sessionId)
-            .setValue(session)
-            .addOnSuccessListener {
-                continuation.resume(sessionId)
-            }
-            .addOnFailureListener {
-                continuation.resume("") // Возвращаем пустую строку в случае ошибки
-            }
     }
 
     private suspend fun findUserByEmail(email: String): Result<DataSnapshot> = suspendCancellableCoroutine { continuation ->
