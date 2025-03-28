@@ -90,4 +90,11 @@
     <string name="coming_soon">Жақында қол жетімді болады</string>
     <string name="error_occurred">Қате орын алды</string>
     <string name="yesterday">Кеше</string>
+    <string name="start_chat">Чат бастау</string>
+    <string name="select_user">Пайдаланушыны таңдаңыз</string>
+    <string name="search_users">Пайдаланушыларды іздеу</string>
+    <string name="no_users_found">Пайдаланушылар табылмады</string>
+    <string name="create_chat">Чат құру</string>
+    <string name="error_loading_users">Пайдаланушыларды жүктеу кезінде қате</string>
+    <string name="back">Артқа</string>
 </resources>

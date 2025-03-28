@@ -89,4 +89,11 @@
     <string name="coming_soon">Скоро будет доступно</string>
     <string name="error_occurred">Произошла ошибка</string>
     <string name="yesterday">Вчера</string>
+    <string name="start_chat">Начать чат</string>
+    <string name="select_user">Выберите пользователя</string>
+    <string name="search_users">Поиск пользователей</string>
+    <string name="no_users_found">Пользователи не найдены</string>
+    <string name="create_chat">Создать чат</string>
+    <string name="error_loading_users">Ошибка при загрузке пользователей</string>
+    <string name="back">Назад</string>
 </resources>

@@ -16,6 +16,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.sgstudio.OfoxMessenger.adapters.MessageAdapter
 import com.sgstudio.OfoxMessenger.databinding.ActivityHomeBinding
+import com.sgstudio.OfoxMessenger.fragments.NewChatBottomSheetFragment
 import com.sgstudio.OfoxMessenger.models.ChatMessage
 import com.sgstudio.OfoxMessenger.utils.NetworkUtils
 import com.sgstudio.OfoxMessenger.utils.SessionManager
@@ -205,6 +206,7 @@ class HomeActivity : AppCompatActivity() {
         })
     }
 
+    // В методе setupClickListeners() обновим обработчик для кнопки нового сообщения
     private fun setupClickListeners() {
         // Обработчик кнопки настроек
         binding.settingsButton.setOnClickListener {
@@ -219,8 +221,7 @@ class HomeActivity : AppCompatActivity() {
 
         // Обработчик кнопки нового сообщения
         binding.newMessageButton.setOnClickListener {
-            // TODO: Переход на экран создания нового сообщения
-            showSnackbar(getString(R.string.coming_soon))
+            showNewChatBottomSheet()
         }
 
         // Обработчик кнопки повтора при ошибке сети
@@ -228,6 +229,12 @@ class HomeActivity : AppCompatActivity() {
             hideNetworkError()
             loadRecentMessages()
         }
+    }
+
+    // Добавим новый метод для показа BottomSheet
+    private fun showNewChatBottomSheet() {
+        val bottomSheetFragment = NewChatBottomSheetFragment.newInstance()
+        bottomSheetFragment.show(supportFragmentManager, NewChatBottomSheetFragment.TAG)
     }
 
     private fun showLogoutConfirmationDialog() {

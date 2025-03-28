@@ -54,6 +54,12 @@
             android:name=".MainActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- В секции <application> добавим новую активность -->
+        <activity
+            android:name=".ChatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OfoxMessenger" />
     </application>
 
 </manifest>
