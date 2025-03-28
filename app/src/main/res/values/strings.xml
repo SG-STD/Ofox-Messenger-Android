@@ -49,4 +49,14 @@
     <string name="privacy_policy_title">Политика конфиденциальности</string>
     <string name="terms_of_service_title">Пользовательское соглашение</string>
     <string name="loading">Загрузка...</string>
+    <string name="email_verification_title">Подтверждение электронной почты</string>
+    <string name="email_verification_message">На адрес %s отправлено письмо с ссылкой для подтверждения. Пожалуйста, проверьте вашу почту и перейдите по ссылке для завершения регистрации.</string>
+    <string name="verification_code_title">Введите код подтверждения</string>
+    <string name="verification_code_message">На ваш email %s отправлен 6-значный код подтверждения. Введите его для завершения регистрации.</string>
+    <string name="verification_code_hint">Код подтверждения</string>
+    <string name="resend_code">Отправить код повторно</string>
+    <string name="code_sent">Код отправлен на ваш email</string>
+    <string name="invalid_code">Неверный код подтверждения</string>
+    <string name="verification_success">Регистрация успешно завершена</string>
+    <string name="verification_failed">Ошибка подтверждения</string>
 </resources>

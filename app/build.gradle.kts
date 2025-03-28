@@ -66,6 +66,8 @@ dependencies {
 
     // OkHttp для сетевых запросов
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.sun.mail:android-mail:1.6.5")
+    implementation("com.sun.mail:android-activation:1.6.")
 
     // ViewBinding
     implementation("androidx.core:core-ktx:1.12.0")

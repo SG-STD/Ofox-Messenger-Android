@@ -50,4 +50,14 @@
     <string name="privacy_policy_title">Құпиялылық саясаты</string>
     <string name="terms_of_service_title">Пайдаланушы келісімі</string>
     <string name="loading">Жүктелуде...</string>
+    <string name="email_verification_title">Электрондық поштаны растау</string>
+    <string name="email_verification_message">%s мекенжайына растау сілтемесі бар хат жіберілді. Тіркелуді аяқтау үшін поштаңызды тексеріп, сілтеме бойынша өтіңіз.</string>
+    <string name="verification_code_title">Растау кодын енгізіңіз</string>
+    <string name="verification_code_message">%s электрондық поштаңызға 6 таңбалы растау коды жіберілді. Тіркелуді аяқтау үшін оны енгізіңіз.</string>
+    <string name="verification_code_hint">Растау коды</string>
+    <string name="resend_code">Кодты қайта жіберу</string>
+    <string name="code_sent">Код электрондық поштаңызға жіберілді</string>
+    <string name="invalid_code">Жарамсыз растау коды</string>
+    <string name="verification_success">Тіркеу сәтті аяқталды</string>
+    <string name="verification_failed">Растау қатесі</string>
 </resources>

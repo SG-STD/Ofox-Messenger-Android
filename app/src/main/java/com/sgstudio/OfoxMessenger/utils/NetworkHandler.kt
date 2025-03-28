@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.mindrot.jbcrypt.BCrypt
@@ -805,5 +806,203 @@ class NetworkHandler(private val secretKey: String?) {
                     continuation.resume(false)
                 }
             })
+    }
+
+    suspend fun sendVerificationRequest(data: JSONObject): Result<JSONObject> {
+        return withContext(Dispatchers.IO) {
+            // Проверка лимита запросов
+            if (!checkRequestLimit()) {
+                return@withContext Result.failure(Exception("Превышен лимит запросов. Пожалуйста, подождите немного."))
+            }
+
+            try {
+                val action = data.optString("action", "")
+
+                when (action) {
+                    "pre_register" -> {
+                        // Предварительная регистрация с отправкой кода подтверждения
+                        val email = data.getString("email")
+                        val nickname = data.getString("nickname")
+
+                        // Проверяем, не существует ли уже пользователь с таким email
+                        val emailExists = checkUserExists(email)
+                        if (emailExists) {
+                            return@withContext Result.failure(Exception("Пользователь с таким email уже существует"))
+                        }
+
+                        // Проверяем, не существует ли пользователь с таким никнеймом
+                        val nicknameExists = checkUserExistsByNickname(nickname)
+                        if (nicknameExists) {
+                            return@withContext Result.failure(Exception("Пользователь с таким никнеймом уже существует"))
+                        }
+
+                        // Генерируем 6-значный код подтверждения
+                        val verificationCode = (100000..999999).random().toString()
+
+                        // Сохраняем данные во временной записи
+                        val database = FirebaseDatabase.getInstance()
+                        val pendingUserRef = database.getReference("pending_users").child(email.replace(".", ","))
+
+                        val pendingUserData = HashMap<String, Any>().apply {
+                            put("email", email)
+                            put("nickname", nickname)
+                            put("verification_code", verificationCode)
+                            put("created_at", System.currentTimeMillis())
+                            put("expires_at", System.currentTimeMillis() + 3600000) // 1 час
+
+                            // Сохраняем пароль и фото профиля, если они есть
+                            if (data.has("password")) {
+                                val password = data.getString("password")
+                                val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
+                                put("password_hash", passwordHash)
+                            } else if (data.has("password_hash")) {
+                                put("password_hash", data.getString("password_hash"))
+                            }
+
+                            if (data.has("profile_picture")) {
+                                put("profile_picture", data.getString("profile_picture"))
+                            }
+                        }
+
+                        pendingUserRef.setValue(pendingUserData).await()
+
+                        // Отправляем email с кодом подтверждения
+                        val emailSent = EmailSender.sendVerificationEmail(email, nickname, verificationCode)
+
+                        if (emailSent) {
+                            val result = JSONObject().apply {
+                                put("success", true)
+                                put("message", "Код подтверждения отправлен")
+                                // В реальном приложении не следует возвращать код клиенту
+                                // Это только для тестирования
+                                put("verification_code", verificationCode)
+                            }
+
+                            return@withContext Result.success(result)
+                        } else {
+                            // Если не удалось отправить email, удаляем временную запись
+                            pendingUserRef.removeValue().await()
+                            throw Exception("Ошибка отправки кода подтверждения. Пожалуйста, проверьте ваш email.")
+                        }
+                    }
+
+                    "verify_code" -> {
+                        // Проверка кода подтверждения
+                        val email = data.getString("email")
+                        val code = data.getString("code")
+
+                        // Получаем данные из Firebase
+                        val database = FirebaseDatabase.getInstance()
+                        val pendingUserRef = database.getReference("pending_users").child(email.replace(".", ","))
+                        val pendingUserSnapshot = pendingUserRef.get().await()
+
+                        if (!pendingUserSnapshot.exists()) {
+                            return@withContext Result.failure(Exception("Данные регистрации не найдены"))
+                        }
+
+                        val storedCode = pendingUserSnapshot.child("verification_code").getValue(String::class.java)
+                        val expiresAt = pendingUserSnapshot.child("expires_at").getValue(Long::class.java) ?: 0
+
+                        // Проверяем срок действия кода
+                        if (System.currentTimeMillis() > expiresAt) {
+                            return@withContext Result.failure(Exception("Срок действия кода истек"))
+                        }
+
+                        // Проверяем код
+                        if (code != storedCode) {
+                            return@withContext Result.failure(Exception("Неверный код подтверждения"))
+                        }
+
+                        // Код верный, создаем пользователя
+                        val nickname = pendingUserSnapshot.child("nickname").getValue(String::class.java) ?: ""
+                        val passwordHash = pendingUserSnapshot.child("password_hash").getValue(String::class.java) ?: ""
+                        val profilePicture = pendingUserSnapshot.child("profile_picture").getValue(String::class.java) ?: ""
+
+                        // Генерируем уникальный ID для нового пользователя
+                        val newUserRef = database.getReference("users").push()
+                        val userId = newUserRef.key ?:
+                        return@withContext Result.failure(Exception("Ошибка создания пользователя"))
+
+                        // Создаем данные пользователя
+                        val userData = HashMap<String, Any>().apply {
+                            put("email", email)
+                            put("password_hash", passwordHash)
+                            put("nickname", nickname)
+                            put("profile_picture", profilePicture)
+                            put("status", "")
+                            put("registration_date", System.currentTimeMillis().toString())
+                            put("last_login", System.currentTimeMillis().toString())
+                            put("last_seen", System.currentTimeMillis())
+                            put("is_online", false)
+                            put("isBanned", false)
+                            put("email_verified", true)
+                        }
+
+                        // Сохраняем пользователя
+                        newUserRef.setValue(userData).await()
+
+                        // Удаляем временную запись
+                        pendingUserRef.removeValue().await()
+
+                        // Возвращаем успешный результат
+                        val result = JSONObject().apply {
+                            put("success", true)
+                            put("message", "Регистрация успешно завершена")
+                            put("user_id", userId)
+                            put("email", email)
+                            put("nickname", nickname)
+                        }
+
+                        return@withContext Result.success(result)
+                    }
+
+                    "resend_code" -> {
+                        // Повторная отправка кода подтверждения
+                        val email = data.getString("email")
+                        val nickname = data.getString("nickname")
+
+                        // Проверяем существование записи
+                        val database = FirebaseDatabase.getInstance()
+                        val pendingUserRef = database.getReference("pending_users").child(email.replace(".", ","))
+                        val pendingUserSnapshot = pendingUserRef.get().await()
+
+                        if (!pendingUserSnapshot.exists()) {
+                            return@withContext Result.failure(Exception("Данные регистрации не найдены"))
+                        }
+
+                        // Генерируем новый код подтверждения
+                        val verificationCode = (100000..999999).random().toString()
+
+                        // Обновляем код и срок его действия
+                        pendingUserRef.child("verification_code").setValue(verificationCode).await()
+                        pendingUserRef.child("expires_at").setValue(System.currentTimeMillis() + 3600000).await() // 1 час
+
+                        // Отправляем email с новым кодом
+                        val emailSent = EmailSender.sendVerificationEmail(email, nickname, verificationCode)
+
+                        if (emailSent) {
+                            val result = JSONObject().apply {
+                                put("success", true)
+                                put("message", "Код подтверждения отправлен повторно")
+                                // В реальном приложении не следует возвращать код клиенту
+                                // Это только для тестирования
+                                put("verification_code", verificationCode)
+                            }
+
+                            return@withContext Result.success(result)
+                        } else {
+                            throw Exception("Ошибка отправки кода подтверждения. Пожалуйста, проверьте ваш email.")
+                        }
+                    }
+
+                    else -> {
+                        return@withContext Result.failure(Exception("Неизвестное действие"))
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("NetworkHandler", "Ошибка при обработке запроса верификации: ${e.message}", e)
+                return@withContext Result.failure(Exception("Ошибка при обработке запроса: ${e.message}"))
+            }
+        }
     }
 }

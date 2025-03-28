@@ -28,6 +28,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -257,6 +259,200 @@ class RegisterActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun registerUserWithEmailVerification(nickname: String, email: String, password: String) {
+        // Проверка подключения к интернету
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            showNetworkError(getString(R.string.network_error))
+            return
+        }
+
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                showProgress(true)
+
+                // Подготовка данных для запроса на предварительную регистрацию
+                val jsonData = JSONObject().apply {
+                    put("email", email)
+                    put("password", password)
+                    put("nickname", nickname)
+                    put("action", "pre_register")
+                    if (profileImageBase64 != null) {
+                        put("profile_picture", profileImageBase64)
+                    }
+                }
+
+                // Отправка запроса через NetworkHandler
+                val result = networkHandler.sendVerificationRequest(jsonData)
+
+                if (result.isSuccess) {
+                    val response = result.getOrNull()
+                    if (response != null && response.optBoolean("success", false)) {
+                        // Успешная предварительная регистрация
+                        showProgress(false)
+
+                        // Для тестирования можно получить код из ответа
+                        val verificationCode = response.optString("verification_code", "")
+                        if (verificationCode.isNotEmpty()) {
+                            Log.d("RegisterActivity", "Verification code: $verificationCode")
+                        }
+
+                        // Показываем диалог для ввода кода подтверждения
+                        showVerificationCodeDialog(email)
+                    } else {
+                        showProgress(false)
+                        showSnackbar(response?.optString("message") ?: getString(R.string.registration_failed))
+                    }
+                } else {
+                    val error = result.exceptionOrNull()?.message ?: getString(R.string.network_error)
+                    showProgress(false)
+                    showSnackbar(error)
+
+                    if (error.contains("сети") || error.contains("network")) {
+                        showNetworkError(error)
+                    }
+                }
+            } catch (e: Exception) {
+                showProgress(false)
+                showSnackbar(e.message ?: getString(R.string.network_error))
+            }
+        }
+    }
+
+    private fun showVerificationCodeDialog(email: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_verification_code, null)
+        val titleTextView = dialogView.findViewById<TextView>(R.id.titleTextView)
+        val messageTextView = dialogView.findViewById<TextView>(R.id.messageTextView)
+        val codeInputLayout = dialogView.findViewById<TextInputLayout>(R.id.codeInputLayout)
+        val codeEditText = dialogView.findViewById<TextInputEditText>(R.id.codeEditText)
+        val resendCodeTextView = dialogView.findViewById<TextView>(R.id.resendCodeTextView)
+
+        titleTextView.text = getString(R.string.verification_code_title)
+        messageTextView.text = getString(R.string.verification_code_message, email)
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .setPositiveButton(R.string.ok, null) // Мы переопределим этот обработчик ниже
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                // Пользователь отменил верификацию
+                finish()
+            }
+            .create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val enteredCode = codeEditText.text.toString().trim()
+
+                if (enteredCode.isEmpty() || enteredCode.length != 6) {
+                    codeInputLayout.error = getString(R.string.invalid_code)
+                    return@setOnClickListener
+                }
+
+                // Проверяем код через NetworkHandler
+                verifyCodeAndCompleteRegistration(email, enteredCode, dialog)
+            }
+        }
+
+        // Обработчик повторной отправки кода
+        resendCodeTextView.setOnClickListener {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    showProgress(true)
+
+                    // Подготовка данных для запроса
+                    val jsonData = JSONObject().apply {
+                        put("email", email)
+                        put("action", "resend_code")
+                        put("nickname", binding.nicknameEditText.text.toString().trim()) // Используем текущее значение никнейма
+                    }
+
+                    // Отправка запроса через NetworkHandler
+                    val result = networkHandler.sendVerificationRequest(jsonData)
+
+                    showProgress(false)
+
+                    if (result.isSuccess) {
+                        val response = result.getOrNull()
+                        if (response != null && response.optBoolean("success", false)) {
+                            showSnackbar(getString(R.string.code_sent))
+
+                            // Для тестирования можно получить код из ответа
+                            val verificationCode = response.optString("verification_code", "")
+                            if (verificationCode.isNotEmpty()) {
+                                Log.d("RegisterActivity", "New verification code: $verificationCode")
+                            }
+                        } else {
+                            showSnackbar(response?.optString("message") ?: "Ошибка отправки кода")
+                        }
+                    } else {
+                        val error = result.exceptionOrNull()?.message ?: getString(R.string.network_error)
+                        showSnackbar(error)
+                    }
+                } catch (e: Exception) {
+                    showProgress(false)
+                    showSnackbar(e.message ?: "Ошибка отправки кода")
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun verifyCodeAndCompleteRegistration(email: String, code: String, dialog: AlertDialog) {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                showProgress(true)
+
+                // Подготовка данных для запроса
+                val jsonData = JSONObject().apply {
+                    put("email", email)
+                    put("code", code)
+                    put("action", "verify_code")
+                }
+
+                // Отправка запроса через NetworkHandler
+                val result = networkHandler.sendVerificationRequest(jsonData)
+
+                if (result.isSuccess) {
+                    val response = result.getOrNull()
+                    if (response != null && response.optBoolean("success", false)) {
+                        // Успешная верификация
+                        val userId = response.optString("user_id", "")
+
+                        // Если есть изображение профиля, загружаем его в Firebase Storage
+                        if (selectedImageUri != null && userId.isNotEmpty()) {
+                            uploadProfileImage(userId)
+                        } else {
+                            showProgress(false)
+                            dialog.dismiss()
+
+                            // Показываем сообщение об успешной регистрации
+                            showSnackbar(getString(R.string.verification_success))
+
+                            // Возвращаемся на экран входа через 2 секунды
+                            CoroutineScope(Dispatchers.Main).launch {
+                                delay(2000)
+                                finish()
+                            }
+                        }
+                    } else {
+                        showProgress(false)
+                        showSnackbar(response?.optString("message") ?: getString(R.string.verification_failed))
+                    }
+                } else {
+                    val error = result.exceptionOrNull()?.message ?: getString(R.string.verification_failed)
+                    showProgress(false)
+                    showSnackbar(error)
+                }
+            } catch (e: Exception) {
+                showProgress(false)
+                showSnackbar(e.message ?: getString(R.string.verification_failed))
+                Log.e("RegisterActivity", "Error verifying code", e)
+            }
+        }
+    }
+
     private fun showTermsOfServiceDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_legal_document, null)
         val titleTextView = dialogView.findViewById<TextView>(R.id.dialogTitleTextView)
@@ -355,7 +551,8 @@ class RegisterActivity : AppCompatActivity() {
             if (validateInput(nickname, email, password, confirmPassword)) {
                 if (secretKey != null) {
                     showProgress(true)
-                    registerUser(nickname, email, password)
+                    // Вызываем новый метод вместо registerUser
+                    registerUserWithEmailVerification(nickname, email, password)
                 } else {
                     showNetworkError(getString(R.string.network_error))
                 }
@@ -554,6 +751,18 @@ class RegisterActivity : AppCompatActivity() {
                 Log.e("RegisterActivity", "Error uploading image: ${e.message}", e)
             }
         }
+    }
+
+    private fun showEmailVerificationDialog(email: String) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.email_verification_title)
+            .setMessage(getString(R.string.email_verification_message, email))
+            .setPositiveButton(R.string.ok) { _, _ ->
+                // Показываем диалог для ввода кода подтверждения
+                showVerificationCodeDialog(email)
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun showProgress(show: Boolean) {
