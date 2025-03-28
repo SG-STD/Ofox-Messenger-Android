@@ -76,9 +76,10 @@ class MainActivity : AppCompatActivity() {
 
         // Проверка, авторизован ли пользователь
         if (sessionManager.isLoggedIn()) {
-            // TODO: Переход на главный экран, если пользователь уже авторизован
-            // startActivity(Intent(this, HomeActivity::class.java))
-            // finish()
+            // Если пользователь уже авторизован, переходим на главный экран
+            startActivity(Intent(this, HomeActivity::class.java))
+            finish()
+            return
         }
 
         // Настройка анимаций
@@ -182,8 +183,6 @@ class MainActivity : AppCompatActivity() {
         return isValid
     }
 
-    // Обновите метод loginUser:
-    // Обновите метод loginUser:
     private fun loginUser(email: String, password: String) {
         // Проверка подключения к интернету
         if (!NetworkUtils.isNetworkAvailable(this)) {
@@ -217,11 +216,15 @@ class MainActivity : AppCompatActivity() {
                         // Сохраняем данные пользователя
                         saveUserData(userId, nickname, profilePicture, status)
 
+                        // Устанавливаем флаг входа в систему
+                        sessionManager.setLoggedIn(true)
+
                         // Показываем сообщение об успешном входе
                         showSnackbar("Добро пожаловать, $nickname!")
 
-                        // TODO: Переход на главный экран
-                        // startActivity(Intent(this@MainActivity, HomeActivity::class.java))
+                        // Переход на главный экран
+                        startActivity(Intent(this@MainActivity, HomeActivity::class.java))
+                        finish()
 
                         showProgress(false)
                     } else {

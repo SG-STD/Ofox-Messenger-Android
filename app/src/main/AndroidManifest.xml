@@ -35,6 +35,12 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Добавьте следующий код в секцию <application> вашего AndroidManifest.xml -->
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OfoxMessenger" />
+
         <!-- Добавьте в секцию <application> -->
         <service
             android:name=".utils.MyFirebaseMessagingService"

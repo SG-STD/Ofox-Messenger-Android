@@ -60,4 +60,22 @@
     <string name="invalid_code">Invalid verification code</string>
     <string name="verification_success">Registration successfully completed</string>
     <string name="verification_failed">Verification failed</string>
+    <!-- Добавьте эти строки в существующий файл strings.xml для английского языка -->
+    <string name="feed">Feed</string>
+    <string name="chats">Chats</string>
+    <string name="discover">Discover</string>
+    <string name="search">Search</string>
+    <string name="notifications">Notifications</string>
+    <string name="home">Home</string>
+    <string name="messages">Messages</string>
+    <string name="profile">Profile</string>
+    <string name="settings">Settings</string>
+    <string name="create_new">Create</string>
+    <string name="like">Like</string>
+    <string name="comment">Comment</string>
+    <string name="share">Share</string>
+    <string name="profile_avatar">Profile avatar</string>
+    <string name="post_image">Post image</string>
+    <string name="no_posts">No posts</string>
+    <string name="no_posts_description">Posts from your friends and communities will appear here</string>
 </resources>

@@ -1,81 +1,82 @@
 package com.sgstudio.OfoxMessenger.utils
 
 import android.content.Context
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
+import android.content.SharedPreferences
 
-class SessionManager(private val context: Context) {
-    
-    private val prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
-    private val auth = FirebaseAuth.getInstance()
-    private val database = FirebaseDatabase.getInstance()
-    
+class SessionManager(context: Context) {
+    private val prefs: SharedPreferences = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+    private val editor: SharedPreferences.Editor = prefs.edit()
+
+    companion object {
+        private const val IS_LOGGED_IN = "is_logged_in"
+        private const val USER_ID = "user_id"
+        private const val NICKNAME = "nickname"
+        private const val PROFILE_PICTURE = "profile_picture"
+        private const val STATUS = "status"
+        private const val LAST_LOGIN = "last_login"
+        private const val AUTH_TOKEN = "auth_token"
+    }
+
+    // Установка флага входа в систему
+    fun setLoggedIn(isLoggedIn: Boolean) {
+        editor.putBoolean(IS_LOGGED_IN, isLoggedIn)
+        editor.apply()
+    }
+
+    // Проверка, вошел ли пользователь в систему
     fun isLoggedIn(): Boolean {
-        return auth.currentUser != null
+        return prefs.getBoolean(IS_LOGGED_IN, false)
     }
-    
+
+    // Сохранение данных пользователя
+    fun saveUserData(userId: String, nickname: String, profilePicture: String, status: String) {
+        editor.putString(USER_ID, userId)
+        editor.putString(NICKNAME, nickname)
+        editor.putString(PROFILE_PICTURE, profilePicture)
+        editor.putString(STATUS, status)
+        editor.putLong(LAST_LOGIN, System.currentTimeMillis())
+        editor.apply()
+    }
+
+    // Сохранение токена авторизации
+    fun saveAuthToken(token: String) {
+        editor.putString(AUTH_TOKEN, token)
+        editor.apply()
+    }
+
+    // Получение ID пользователя
     fun getUserId(): String? {
-        return auth.currentUser?.uid
-    }
-    
-    fun getUserNickname(): String {
-        return prefs.getString("nickname", "") ?: ""
-    }
-    
-    fun getUserProfilePicture(): String {
-        return prefs.getString("profile_picture", "") ?: ""
-    }
-    
-    fun getUserStatus(): String {
-        return prefs.getString("status", "") ?: ""
-    }
-    
-    fun updateUserStatus(newStatus: String) {
-        val userId = getUserId() ?: return
-        
-        // Обновляем статус в Firebase
-        val userRef = database.getReference("users/$userId")
-        userRef.child("status").setValue(newStatus)
-        
-        // Обновляем локальные данные
-        prefs.edit().putString("status", newStatus).apply()
+        return prefs.getString(USER_ID, null)
     }
 
-    fun refreshAuthIfNeeded() {
-        val user = auth.currentUser ?: return
-
-        // Проверяем, когда последний раз обновлялся токен
-        val lastTokenRefresh = prefs.getLong("last_token_refresh", 0)
-        val currentTime = System.currentTimeMillis()
-
-        // Если прошло больше 1 часа, обновляем токен
-        if (currentTime - lastTokenRefresh > 3600000) {
-            user.getIdToken(true)
-                .addOnSuccessListener { result ->
-                    // Токен успешно обновлен
-                    prefs.edit().putLong("last_token_refresh", currentTime).apply()
-                }
-                .addOnFailureListener { exception ->
-                    // Если не удалось обновить токен, выходим из аккаунта
-                    if (exception.message?.contains("auth credential is incorrect") == true) {
-                        logout()
-                    }
-                }
-        }
+    // Получение никнейма пользователя
+    fun getNickname(): String? {
+        return prefs.getString(NICKNAME, null)
     }
 
+    // Получение URL аватара пользователя
+    fun getProfilePicture(): String? {
+        return prefs.getString(PROFILE_PICTURE, null)
+    }
+
+    // Получение статуса пользователя
+    fun getStatus(): String? {
+        return prefs.getString(STATUS, null)
+    }
+
+    // Получение времени последнего входа
+    fun getLastLogin(): Long {
+        return prefs.getLong(LAST_LOGIN, 0)
+    }
+
+    // Получение токена авторизации
+    fun getAuthToken(): String? {
+        return prefs.getString(AUTH_TOKEN, null)
+    }
+
+    // Выход из системы (очистка данных сессии)
     fun logout() {
-        // Обновляем статус "офлайн" в Firebase
-        val userId = getUserId()
-        if (userId != null) {
-            val userRef = database.getReference("users/$userId")
-            userRef.child("last_seen").setValue(System.currentTimeMillis())
-        }
-        
-        // Выходим из Firebase Auth
-        auth.signOut()
-        
-        // Очищаем локальные данные
-        prefs.edit().clear().apply()
+        editor.clear()
+        editor.apply()
     }
 }

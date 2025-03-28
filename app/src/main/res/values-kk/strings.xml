@@ -60,4 +60,22 @@
     <string name="invalid_code">Жарамсыз растау коды</string>
     <string name="verification_success">Тіркеу сәтті аяқталды</string>
     <string name="verification_failed">Растау қатесі</string>
+    <!-- Добавьте эти строки в существующий файл strings.xml для казахского языка -->
+    <string name="feed">Лента</string>
+    <string name="chats">Чаттар</string>
+    <string name="discover">Қызықты</string>
+    <string name="search">Іздеу</string>
+    <string name="notifications">Хабарландырулар</string>
+    <string name="home">Басты бет</string>
+    <string name="messages">Хабарламалар</string>
+    <string name="profile">Профиль</string>
+    <string name="settings">Параметрлер</string>
+    <string name="create_new">Жасау</string>
+    <string name="like">Ұнайды</string>
+    <string name="comment">Пікір</string>
+    <string name="share">Бөлісу</string>
+    <string name="profile_avatar">Профиль аватары</string>
+    <string name="post_image">Пост суреті</string>
+    <string name="no_posts">Посттар жоқ</string>
+    <string name="no_posts_description">Мұнда достарыңыз бен қауымдастықтардың посттары көрсетіледі</string>
 </resources>

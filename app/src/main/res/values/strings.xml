@@ -59,4 +59,25 @@
     <string name="invalid_code">Неверный код подтверждения</string>
     <string name="verification_success">Регистрация успешно завершена</string>
     <string name="verification_failed">Ошибка подтверждения</string>
+    <!-- Добавьте эти строки в существующий файл strings.xml -->
+    <string name="feed">Лента</string>
+    <string name="chats">Чаты</string>
+    <string name="discover">Интересное</string>
+    <string name="search">Поиск</string>
+    <string name="notifications">Уведомления</string>
+    <string name="home">Главная</string>
+    <string name="messages">Сообщения</string>
+    <string name="profile">Профиль</string>
+    <string name="settings">Настройки</string>
+    <string name="create_new">Создать</string>
+    <string name="white_70">#B3FFFFFF</string>
+    <!-- Добавьте эти строки в существующий файл strings.xml -->
+    <string name="like">Нравится</string>
+    <string name="comment">Комментировать</string>
+    <string name="share">Поделиться</string>
+    <string name="profile_avatar">Аватар профиля</string>
+    <string name="post_image">Изображение поста</string>
+    <string name="no_posts">Нет постов</string>
+    <string name="no_posts_description">Здесь будут отображаться посты ваших друзей и сообществ</string>
+    <string name="create_new_post">Создать новый пост</string>
 </resources>

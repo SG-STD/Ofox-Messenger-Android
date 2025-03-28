@@ -21,4 +21,8 @@
     <color name="success_color">#FF4CAF50</color>
     <color name="warning_color">#FFFFAB00</color>
     <color name="orange_400">#FFA726</color>
+    <color name="white_70">#B3FFFFFF</color>
+    <color name="white_20_percent">#33FFFFFF</color>
+    <color name="white_70_percent">#B3FFFFFF</color>
+    <color name="orange_20_percent">#33FF5722</color>
 </resources>
