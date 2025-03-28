@@ -25,4 +25,6 @@
     <color name="white_20_percent">#33FFFFFF</color>
     <color name="white_70_percent">#B3FFFFFF</color>
     <color name="orange_20_percent">#33FF5722</color>
+    <color name="green_500">#4CAF50</color>
+    <color name="gray_300">#E0E0E0</color>
 </resources>

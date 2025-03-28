@@ -17,13 +17,11 @@ class SessionManager(context: Context) {
         private const val AUTH_TOKEN = "auth_token"
     }
 
-    // Установка флага входа в систему
     fun setLoggedIn(isLoggedIn: Boolean) {
         editor.putBoolean(IS_LOGGED_IN, isLoggedIn)
         editor.apply()
     }
 
-    // Проверка, вошел ли пользователь в систему
     fun isLoggedIn(): Boolean {
         return prefs.getBoolean(IS_LOGGED_IN, false)
     }
@@ -74,8 +72,8 @@ class SessionManager(context: Context) {
         return prefs.getString(AUTH_TOKEN, null)
     }
 
-    // Выход из системы (очистка данных сессии)
-    fun logout() {
+    // Добавьте этот метод для очистки данных сессии
+    fun clearSession() {
         editor.clear()
         editor.apply()
     }

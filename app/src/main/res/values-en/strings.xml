@@ -78,4 +78,16 @@
     <string name="post_image">Post image</string>
     <string name="no_posts">No posts</string>
     <string name="no_posts_description">Posts from your friends and communities will appear here</string>
+    <!-- Strings for HomeActivity -->
+    <string name="new_message">New message</string>
+    <string name="no_messages">No messages</string>
+    <string name="no_messages_yet">You don\'t have any messages yet</string>
+    <string name="start_conversation">Start a conversation by clicking the new message button</string>
+    <string name="logout">Logout</string>
+    <string name="logout_confirmation">Are you sure you want to logout?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="coming_soon">Coming soon</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="yesterday">Yesterday</string>
 </resources>

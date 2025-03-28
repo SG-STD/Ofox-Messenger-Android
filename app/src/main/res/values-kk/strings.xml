@@ -78,4 +78,16 @@
     <string name="post_image">Пост суреті</string>
     <string name="no_posts">Посттар жоқ</string>
     <string name="no_posts_description">Мұнда достарыңыз бен қауымдастықтардың посттары көрсетіледі</string>
+    <!-- HomeActivity строки -->
+    <string name="new_message">Жаңа хабарлама</string>
+    <string name="no_messages">Хабарламалар жоқ</string>
+    <string name="no_messages_yet">Сізде әлі хабарламалар жоқ</string>
+    <string name="start_conversation">Жаңа хабарлама түймесін басу арқылы әңгімелесуді бастаңыз</string>
+    <string name="logout">Шығу</string>
+    <string name="logout_confirmation">Шынымен шыққыңыз келе ме?</string>
+    <string name="yes">Иә</string>
+    <string name="no">Жоқ</string>
+    <string name="coming_soon">Жақында қол жетімді болады</string>
+    <string name="error_occurred">Қате орын алды</string>
+    <string name="yesterday">Кеше</string>
 </resources>

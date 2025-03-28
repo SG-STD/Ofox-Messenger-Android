@@ -70,7 +70,6 @@
     <string name="profile">Профиль</string>
     <string name="settings">Настройки</string>
     <string name="create_new">Создать</string>
-    <string name="white_70">#B3FFFFFF</string>
     <!-- Добавьте эти строки в существующий файл strings.xml -->
     <string name="like">Нравится</string>
     <string name="comment">Комментировать</string>
@@ -79,5 +78,15 @@
     <string name="post_image">Изображение поста</string>
     <string name="no_posts">Нет постов</string>
     <string name="no_posts_description">Здесь будут отображаться посты ваших друзей и сообществ</string>
-    <string name="create_new_post">Создать новый пост</string>
+    <string name="new_message">Новое сообщение</string>
+    <string name="no_messages">Нет сообщений</string>
+    <string name="no_messages_yet">У вас пока нет сообщений</string>
+    <string name="start_conversation">Начните общение, нажав на кнопку нового сообщения</string>
+    <string name="logout">Выход</string>
+    <string name="logout_confirmation">Вы действительно хотите выйти?</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="coming_soon">Скоро будет доступно</string>
+    <string name="error_occurred">Произошла ошибка</string>
+    <string name="yesterday">Вчера</string>
 </resources>
