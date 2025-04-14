@@ -87,6 +87,8 @@ class MainActivity : AppCompatActivity() {
 
         // Настройка обработчиков событий
         setupClickListeners()
+
+        throw RuntimeException("Тестовая ошибка для проверки обработчика исключений")
     }
 
     private fun loadEncryptionKey() {

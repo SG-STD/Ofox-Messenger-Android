@@ -10,15 +10,21 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
-        android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
+        android:name=".OfoxMessengerApplication"
+        android:allowBackup="true"
         android:icon="@drawable/app_logo"
         android:label="@string/app_name"
         android:roundIcon="@drawable/app_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.OfoxMessenger"
         tools:targetApi="31">
+
+        <activity
+            android:name=".ErrorHandlerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <activity
             android:name=".SplashActivity"
