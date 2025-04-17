@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -182,60 +183,24 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun setupClickableTerms() {
-        // Создаем SpannableString с кликабельными частями
-        val fullText = getString(R.string.terms_agreement)
-        val spannableString = SpannableString(Html.fromHtml(fullText, Html.FROM_HTML_MODE_COMPACT))
-
-        // Находим позиции для "Политики конфиденциальности"
-        val privacyStart = fullText.indexOf("Политикой конфиденциальности")
-        val privacyEnd = privacyStart + "Политикой конфиденциальности".length
-
-        // Находим позиции для "Пользовательским соглашением"
-        val termsStart = fullText.indexOf("Пользовательским соглашением")
-        val termsEnd = termsStart + "Пользовательским соглашением".length
-
-        // Добавляем кликабельные спаны
-        if (privacyStart >= 0) {
-            spannableString.setSpan(
-                object : ClickableSpan() {
-                    override fun onClick(widget: View) {
-                        showPrivacyPolicyDialog()
-                    }
-
-                    override fun updateDrawState(ds: TextPaint) {
-                        super.updateDrawState(ds)
-                        ds.color = ContextCompat.getColor(this@RegisterActivity, R.color.orange_500)
-                        ds.isUnderlineText = true
-                    }
-                },
-                privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
+        // Настраиваем обработчики кликов для отдельных TextView
+        binding.privacyPolicyTextView.setOnClickListener {
+            showPrivacyPolicyDialog()
         }
 
-        if (termsStart >= 0) {
-            spannableString.setSpan(
-                object : ClickableSpan() {
-                    override fun onClick(widget: View) {
-                        showTermsOfServiceDialog()
-                    }
-
-                    override fun updateDrawState(ds: TextPaint) {
-                        super.updateDrawState(ds)
-                        ds.color = ContextCompat.getColor(this@RegisterActivity, R.color.orange_500)
-                        ds.isUnderlineText = true
-                    }
-                },
-                termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
+        binding.termsOfServiceTextView.setOnClickListener {
+            showTermsOfServiceDialog()
         }
 
-        // Устанавливаем текст и движение
-        binding.termsTextView.text = spannableString
-        binding.termsTextView.movementMethod = LinkMovementMethod.getInstance()
+        // Добавляем подчеркивание для текста
+        binding.privacyPolicyTextView.paintFlags = binding.privacyPolicyTextView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+        binding.termsOfServiceTextView.paintFlags = binding.termsOfServiceTextView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
 
-        // Добавляем иконку, указывающую на кликабельность
-        binding.termsTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_open_in_new, 0)
-        binding.termsTextView.compoundDrawablePadding = 8
+        // Добавляем иконки для визуального улучшения (опционально)
+        binding.privacyPolicyTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_open_in_new, 0)
+        binding.termsOfServiceTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_open_in_new, 0)
+        binding.privacyPolicyTextView.compoundDrawablePadding = 8
+        binding.termsOfServiceTextView.compoundDrawablePadding = 8
     }
 
     private fun showPrivacyPolicyDialog() {

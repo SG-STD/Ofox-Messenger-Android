@@ -45,10 +45,13 @@
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="permission_denied">Permission to access photos denied</string>
-    <string name="terms_agreement">I agree to the <u>Privacy Policy</u> and <u>Terms of Service</u></string>
+    <string name="terms_agreement">I agree to the <font color="#FF5722"><u>Privacy Policy</u></font> and <font color="#FF5722"><u>Terms of Service</u></font></string>
     <string name="terms_not_accepted">You must accept the terms of service to register</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="terms_of_service_title">Terms of Service</string>
+    <string name="terms_header">To continue registration, you need to accept:</string>
+    <string name="privacy_policy_link">Privacy Policy</string>
+    <string name="terms_of_service_link">Terms of Service</string>
     <string name="loading">Loading...</string>
     <string name="email_verification_title">Email Verification</string>
     <string name="email_verification_message">A confirmation email has been sent to %s. Please check your inbox and follow the link to complete your registration.</string>

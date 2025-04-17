@@ -45,10 +45,13 @@
     <string name="ok">OK</string>
     <string name="cancel">Бас тарту</string>
     <string name="permission_denied">Фотосуреттерге қол жеткізу рұқсаты берілмеді</string>
-    <string name="terms_agreement"><u>Құпиялылық саясатымен</u> және <u>Пайдаланушы келісімімен</u> келісемін</string>
+    <string name="terms_agreement">Мен <font color="#FF5722"><u>Құпиялылық саясатымен</u></font> және <font color="#FF5722"><u>Пайдаланушы келісімімен</u></font> келісемін</string>
     <string name="terms_not_accepted">Тіркелу үшін пайдаланушы келісімінің шарттарын қабылдау қажет</string>
     <string name="privacy_policy_title">Құпиялылық саясаты</string>
     <string name="terms_of_service_title">Пайдаланушы келісімі</string>
+    <string name="terms_header">Тіркеуді жалғастыру үшін келесілерді қабылдау қажет:</string>
+    <string name="privacy_policy_link">Құпиялылық саясаты</string>
+    <string name="terms_of_service_link">Пайдаланушы келісімі</string>
     <string name="loading">Жүктелуде...</string>
     <string name="email_verification_title">Электрондық поштаны растау</string>
     <string name="email_verification_message">%s мекенжайына растау сілтемесі бар хат жіберілді. Тіркелуді аяқтау үшін поштаңызды тексеріп, сілтеме бойынша өтіңіз.</string>

@@ -48,6 +48,9 @@
     <string name="terms_not_accepted">Для регистрации необходимо принять условия пользовательского соглашения</string>
     <string name="privacy_policy_title">Политика конфиденциальности</string>
     <string name="terms_of_service_title">Пользовательское соглашение</string>
+    <string name="terms_header">Для продолжения регистрации необходимо принять:</string>
+    <string name="privacy_policy_link">Политику конфиденциальности</string>
+    <string name="terms_of_service_link">Пользовательское соглашение</string>
     <string name="loading">Загрузка...</string>
     <string name="email_verification_title">Подтверждение электронной почты</string>
     <string name="email_verification_message">На адрес %s отправлено письмо с ссылкой для подтверждения. Пожалуйста, проверьте вашу почту и перейдите по ссылке для завершения регистрации.</string>
